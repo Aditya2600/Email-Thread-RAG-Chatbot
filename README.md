@@ -194,9 +194,11 @@ Included coverage:
 - rewrite fallback
 - end-to-end manifest build + ingest path
 
-## Demo video
-- Screen recording file: `Screen_Recording/Screen Recording 2026-03-15 at 10.34.27 PM.mov`
-- Recommended submission note: include this recording alongside the repository so reviewers can verify thread focus, pronoun/ellipsis handling, correction handling, attachment citations, and one graceful failure.
+## Demo
+
+https://github.com/Aditya2600/Email-Thread-RAG-Chatbot-Nexux-Ocean/raw/main/Screen_Recording/Screen%20Recording%202026-03-15%20at%2010.34.27%E2%80%AFPM.mov
+
+> The recording demonstrates: thread selection, streaming chat, pronoun/ellipsis follow-up handling, attachment citations, correction override, and graceful abstention on out-of-scope questions.
 
 ## Sample questions
 For one clean attachment-bearing thread in the default Allen slice, use:
