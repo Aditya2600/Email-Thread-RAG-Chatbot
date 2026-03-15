@@ -1,0 +1,1067 @@
+{
+  "source": {
+    "name": "enronarchive/enron-mail",
+    "provider": "github_repo",
+    "repo": "enronarchive/enron-mail",
+    "revision": "main",
+    "attachment_base_url": "https://huggingface.co/datasets/enronarchive/mail/resolve/main",
+    "note": "Primary corpus source. The first ingest auto-fetches a deterministic laptop-sized slice from mailbox JSON plus only the selected attachments."
+  },
+  "mailboxes": [
+    {
+      "mailbox": "allen-p",
+      "files": [
+        {
+          "relative_path": "_mailboxes/allen-p/index.json",
+          "repo_path": "mail/allen-p/index.json"
+        }
+      ],
+      "selection": {
+        "date_start": "2000-12-01",
+        "date_end": "2001-05-31",
+        "max_threads": 20,
+        "attachment_thread_count": 12,
+        "max_messages_per_thread": 10,
+        "max_attachment_messages_per_thread": 1,
+        "prefer_attachments": true
+      }
+    }
+  ],
+  "threads": [
+    {
+      "thread_key": "allen-p:'non-critical', curtailment, 20010426, krg, 621617372",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "b9415330a84d5e4e54029f5797a19666",
+          "relative_path": "_selected/allen-p/b9415330a84d5e4e54029f5797a19666.json",
+          "local_path": "_selected/allen-p/b9415330a84d5e4e54029f5797a19666.json",
+          "actual_sha256": "e330c84bb67015dc6dc2bc319944fc3190db807669d41ec11ce687401e45a807",
+          "attachments": [
+            {
+              "filename": "Notice.rtf",
+              "relative_path": "_attachments/allen-p/b9415330a84d5e4e54029f5797a19666/01_Notice.rtf",
+              "local_path": "_attachments/allen-p/b9415330a84d5e4e54029f5797a19666/01_Notice.rtf",
+              "actual_sha256": "c3ea8207fed8082e8128af76901597fabd7262e0079c04075a6607afcbd20e59"
+            }
+          ]
+        },
+        {
+          "message_id": "d85950e45a85e4347af01080d5ab3ad4",
+          "relative_path": "_selected/allen-p/d85950e45a85e4347af01080d5ab3ad4.json",
+          "local_path": "_selected/allen-p/d85950e45a85e4347af01080d5ab3ad4.json",
+          "actual_sha256": "c674e808ac9e41f3ba3e6502aed4a9f281aba698c43a29f78ce8507c42218d7a",
+          "attachments": [
+            {
+              "filename": "Notice.rtf",
+              "relative_path": "_attachments/allen-p/d85950e45a85e4347af01080d5ab3ad4/01_Notice.rtf",
+              "local_path": "_attachments/allen-p/d85950e45a85e4347af01080d5ab3ad4/01_Notice.rtf",
+              "actual_sha256": "c3ea8207fed8082e8128af76901597fabd7262e0079c04075a6607afcbd20e59"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:2- survey - phillip allen",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "09fd36e4d20cd2db41ba81c8866dea7e",
+          "relative_path": "_selected/allen-p/09fd36e4d20cd2db41ba81c8866dea7e.json",
+          "local_path": "_selected/allen-p/09fd36e4d20cd2db41ba81c8866dea7e.json",
+          "actual_sha256": "804f15c39e2f5ade1789f79196fe2c5d95a7dde0ceae137c4c38ad59600cdab3",
+          "attachments": []
+        },
+        {
+          "message_id": "534981687f175a989646e2410f6aedd3",
+          "relative_path": "_selected/allen-p/534981687f175a989646e2410f6aedd3.json",
+          "local_path": "_selected/allen-p/534981687f175a989646e2410f6aedd3.json",
+          "actual_sha256": "2362d19c180b43a675248bd9ee785385c0b3ee8d022a5031456ddaf96ac9ba26",
+          "attachments": []
+        },
+        {
+          "message_id": "7490b75ea29ed8fcba02fc4a45d780ad",
+          "relative_path": "_selected/allen-p/7490b75ea29ed8fcba02fc4a45d780ad.json",
+          "local_path": "_selected/allen-p/7490b75ea29ed8fcba02fc4a45d780ad.json",
+          "actual_sha256": "81915a13c83bc0acac0b8e98fd1917f9918d6d05afc0b1a219b780b27dd396db",
+          "attachments": []
+        },
+        {
+          "message_id": "c17c09fed2a416506a6837d945acfbd4",
+          "relative_path": "_selected/allen-p/c17c09fed2a416506a6837d945acfbd4.json",
+          "local_path": "_selected/allen-p/c17c09fed2a416506a6837d945acfbd4.json",
+          "actual_sha256": "d7de1da7bd1675f41fe99cd119f6e91c07b1113322368db1ec046fd7330113a6",
+          "attachments": []
+        },
+        {
+          "message_id": "0253f6e17bae36af67bd9dc1e4df948e",
+          "relative_path": "_selected/allen-p/0253f6e17bae36af67bd9dc1e4df948e.json",
+          "local_path": "_selected/allen-p/0253f6e17bae36af67bd9dc1e4df948e.json",
+          "actual_sha256": "bb893bac28e22497dc56ffc21aa18ada3bec4774cc9dc5fbf4bf86217869a06d",
+          "attachments": [
+            {
+              "filename": "#1.dat",
+              "relative_path": "_attachments/allen-p/0253f6e17bae36af67bd9dc1e4df948e/01_#1.dat",
+              "local_path": "_attachments/allen-p/0253f6e17bae36af67bd9dc1e4df948e/01_#1.dat",
+              "actual_sha256": "e7591386b8ccfc8cb541c7dd617850553c7a116d2111e70ad7e10c082ee2978b"
+            }
+          ]
+        },
+        {
+          "message_id": "1ac70f28c18cbd6ae77c3656751d347a",
+          "relative_path": "_selected/allen-p/1ac70f28c18cbd6ae77c3656751d347a.json",
+          "local_path": "_selected/allen-p/1ac70f28c18cbd6ae77c3656751d347a.json",
+          "actual_sha256": "28c08a743f9c6af07cd50d5281b4c52497775e59b9878a99299cd71fb3051d23",
+          "attachments": [
+            {
+              "filename": "#1.dat",
+              "relative_path": "_attachments/allen-p/1ac70f28c18cbd6ae77c3656751d347a/01_#1.dat",
+              "local_path": "_attachments/allen-p/1ac70f28c18cbd6ae77c3656751d347a/01_#1.dat",
+              "actual_sha256": "cede9f76477ff4ad164be9654860a084015ae88db98d202c45b7afa7bb88958c"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:aga storage for week ending 4/13",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "2d2e45eab41f368ed81d089bf3b73924",
+          "relative_path": "_selected/allen-p/2d2e45eab41f368ed81d089bf3b73924.json",
+          "local_path": "_selected/allen-p/2d2e45eab41f368ed81d089bf3b73924.json",
+          "actual_sha256": "94594d5a902ffc7bd3f7b0f92586be0a522ab1a372bac3e355df9e86da740447",
+          "attachments": [
+            {
+              "filename": "ngstorage_us.pdf",
+              "relative_path": "_attachments/allen-p/2d2e45eab41f368ed81d089bf3b73924/01_ngstorage_us.pdf",
+              "local_path": "_attachments/allen-p/2d2e45eab41f368ed81d089bf3b73924/01_ngstorage_us.pdf",
+              "actual_sha256": "ae5df12384d80d56f88e7dd63ca36af7914f0acf1afc2cee2a61c17bae20eaa7"
+            }
+          ]
+        },
+        {
+          "message_id": "6ea60345a326910e4a147f0028dc15dd",
+          "relative_path": "_selected/allen-p/6ea60345a326910e4a147f0028dc15dd.json",
+          "local_path": "_selected/allen-p/6ea60345a326910e4a147f0028dc15dd.json",
+          "actual_sha256": "a682590400930153be877f0a3e70cc64637e2ebc43721975e53c1587e552d34c",
+          "attachments": [
+            {
+              "filename": "ngstorage_us.pdf",
+              "relative_path": "_attachments/allen-p/6ea60345a326910e4a147f0028dc15dd/01_ngstorage_us.pdf",
+              "local_path": "_attachments/allen-p/6ea60345a326910e4a147f0028dc15dd/01_ngstorage_us.pdf",
+              "actual_sha256": "ae5df12384d80d56f88e7dd63ca36af7914f0acf1afc2cee2a61c17bae20eaa7"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:aga storage for week ending 4/20",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "0fe163d3a4572e83475bed718194d57f",
+          "relative_path": "_selected/allen-p/0fe163d3a4572e83475bed718194d57f.json",
+          "local_path": "_selected/allen-p/0fe163d3a4572e83475bed718194d57f.json",
+          "actual_sha256": "3de57da4186a3b22fe8bc672d7686feeff0b571ffa8075b5dce0e5e3fd61eb5e",
+          "attachments": [
+            {
+              "filename": "ngstorage_us.pdf",
+              "relative_path": "_attachments/allen-p/0fe163d3a4572e83475bed718194d57f/01_ngstorage_us.pdf",
+              "local_path": "_attachments/allen-p/0fe163d3a4572e83475bed718194d57f/01_ngstorage_us.pdf",
+              "actual_sha256": "968dae539b78b2e14a3d9d702dab57cbaa70270a152b94bbfda68aa1737db8ba"
+            }
+          ]
+        },
+        {
+          "message_id": "3a79d617555cdcfe8624c1bb1bd4bc8d",
+          "relative_path": "_selected/allen-p/3a79d617555cdcfe8624c1bb1bd4bc8d.json",
+          "local_path": "_selected/allen-p/3a79d617555cdcfe8624c1bb1bd4bc8d.json",
+          "actual_sha256": "ef00315aeb23c27553ce134b48983cfcbe0201432b2be5c021e7d987fda1fbab",
+          "attachments": [
+            {
+              "filename": "ngstorage_us.pdf",
+              "relative_path": "_attachments/allen-p/3a79d617555cdcfe8624c1bb1bd4bc8d/01_ngstorage_us.pdf",
+              "local_path": "_attachments/allen-p/3a79d617555cdcfe8624c1bb1bd4bc8d/01_ngstorage_us.pdf",
+              "actual_sha256": "968dae539b78b2e14a3d9d702dab57cbaa70270a152b94bbfda68aa1737db8ba"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:all shippers notification: 01-235 - northwest pipeline's notice of available and potentially available firm transportation capacity",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "490dbcc51d96e435f4edb28e0aedf8ab",
+          "relative_path": "_selected/allen-p/490dbcc51d96e435f4edb28e0aedf8ab.json",
+          "local_path": "_selected/allen-p/490dbcc51d96e435f4edb28e0aedf8ab.json",
+          "actual_sha256": "6e13a47b586eba57e3f6a703b188e14c7fb9068ab3e1b2a27db79a1278f03f48",
+          "attachments": [
+            {
+              "filename": "01-235 04-19-2001 includes Remaining Mitigated Capacity_.doc",
+              "relative_path": "_attachments/allen-p/490dbcc51d96e435f4edb28e0aedf8ab/01_01-235 04-19-2001 includes Remaining Mitigated Capacity_.doc",
+              "local_path": "_attachments/allen-p/490dbcc51d96e435f4edb28e0aedf8ab/01_01-235 04-19-2001 includes Remaining Mitigated Capacity_.doc",
+              "actual_sha256": "bfd49ae63550fe37d87f596cdfead7e0af2f0df46c20510377eaf925d41dac79"
+            }
+          ]
+        },
+        {
+          "message_id": "8651207dd125bdef9553bf33df19c92e",
+          "relative_path": "_selected/allen-p/8651207dd125bdef9553bf33df19c92e.json",
+          "local_path": "_selected/allen-p/8651207dd125bdef9553bf33df19c92e.json",
+          "actual_sha256": "ab9dcf02ef1bc32f4786af32e61d1e2ddefc26e53736464bd7475d4733c9be25",
+          "attachments": [
+            {
+              "filename": "01-235 04-19-2001 includes Remaining Mitigated Capacity_.doc",
+              "relative_path": "_attachments/allen-p/8651207dd125bdef9553bf33df19c92e/01_01-235 04-19-2001 includes Remaining Mitigated Capacity_.doc",
+              "local_path": "_attachments/allen-p/8651207dd125bdef9553bf33df19c92e/01_01-235 04-19-2001 includes Remaining Mitigated Capacity_.doc",
+              "actual_sha256": "bfd49ae63550fe37d87f596cdfead7e0af2f0df46c20510377eaf925d41dac79"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:all shippers notification: 01-237 - soliciting electronic bids fo r available firm mainline transportation capacity on northwest's transmis sion system",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "27b8783e0c2abcd57de490078adc254e",
+          "relative_path": "_selected/allen-p/27b8783e0c2abcd57de490078adc254e.json",
+          "local_path": "_selected/allen-p/27b8783e0c2abcd57de490078adc254e.json",
+          "actual_sha256": "df5f2412e18e1c7bf3546a2dcb32a327e9671f6691ac612fa842c869a3a1d9b4",
+          "attachments": [
+            {
+              "filename": "April 26 2001 01-237 Res_.doc",
+              "relative_path": "_attachments/allen-p/27b8783e0c2abcd57de490078adc254e/01_April 26 2001 01-237 Res_.doc",
+              "local_path": "_attachments/allen-p/27b8783e0c2abcd57de490078adc254e/01_April 26 2001 01-237 Res_.doc",
+              "actual_sha256": "74ed3eea542b084475b21d1954d1eeeb66189232c978b3d8c0db8824b69616a3"
+            }
+          ]
+        },
+        {
+          "message_id": "8cca577ad4d8005e51ce38eb7cbb16d6",
+          "relative_path": "_selected/allen-p/8cca577ad4d8005e51ce38eb7cbb16d6.json",
+          "local_path": "_selected/allen-p/8cca577ad4d8005e51ce38eb7cbb16d6.json",
+          "actual_sha256": "1be5f1aff1eed7d591072744780d4c694ed407786142b559b92188af84b7f74f",
+          "attachments": [
+            {
+              "filename": "April 26 2001 01-237 Res_.doc",
+              "relative_path": "_attachments/allen-p/8cca577ad4d8005e51ce38eb7cbb16d6/01_April 26 2001 01-237 Res_.doc",
+              "local_path": "_attachments/allen-p/8cca577ad4d8005e51ce38eb7cbb16d6/01_April 26 2001 01-237 Res_.doc",
+              "actual_sha256": "74ed3eea542b084475b21d1954d1eeeb66189232c978b3d8c0db8824b69616a3"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:bid solicitation",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "036c4137cd99dc2c513e96916a32f624",
+          "relative_path": "_selected/allen-p/036c4137cd99dc2c513e96916a32f624.json",
+          "local_path": "_selected/allen-p/036c4137cd99dc2c513e96916a32f624.json",
+          "actual_sha256": "2f736d4eaaff82cb66b7d435e4cb799fcd8a2a1addc395468a56c3948877541e",
+          "attachments": [
+            {
+              "filename": "mobidltr.501.doc",
+              "relative_path": "_attachments/allen-p/036c4137cd99dc2c513e96916a32f624/01_mobidltr.501.doc",
+              "local_path": "_attachments/allen-p/036c4137cd99dc2c513e96916a32f624/01_mobidltr.501.doc",
+              "actual_sha256": "35e6d3c47eb8c386ae380bc8e6aaaae149b358166c4f914a56b04e4d596d2d22"
+            }
+          ]
+        },
+        {
+          "message_id": "c90ecfb887b787e72b8ce2131cab5fab",
+          "relative_path": "_selected/allen-p/c90ecfb887b787e72b8ce2131cab5fab.json",
+          "local_path": "_selected/allen-p/c90ecfb887b787e72b8ce2131cab5fab.json",
+          "actual_sha256": "a2c5f6aff663a2f5bbd3ac46433fd207a6e58b4c0863420d29a9a446bd104fa3",
+          "attachments": [
+            {
+              "filename": "mobidltr.501.doc",
+              "relative_path": "_attachments/allen-p/c90ecfb887b787e72b8ce2131cab5fab/01_mobidltr.501.doc",
+              "local_path": "_attachments/allen-p/c90ecfb887b787e72b8ce2131cab5fab/01_mobidltr.501.doc",
+              "actual_sha256": "35e6d3c47eb8c386ae380bc8e6aaaae149b358166c4f914a56b04e4d596d2d22"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:credit watch list--4/23/01",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "8680d3fe0d2c7b0f3f2882b949346e8f",
+          "relative_path": "_selected/allen-p/8680d3fe0d2c7b0f3f2882b949346e8f.json",
+          "local_path": "_selected/allen-p/8680d3fe0d2c7b0f3f2882b949346e8f.json",
+          "actual_sha256": "d395329c0c3448c59251aedb0fcfd6a3a21775646cd31227f4cad6f8787f8c3b",
+          "attachments": [
+            {
+              "filename": "4-23-01.xls",
+              "relative_path": "_attachments/allen-p/8680d3fe0d2c7b0f3f2882b949346e8f/01_4-23-01.xls",
+              "local_path": "_attachments/allen-p/8680d3fe0d2c7b0f3f2882b949346e8f/01_4-23-01.xls",
+              "actual_sha256": "039ab4a742a15862bc5af705346f4910b434e291ef05e3323ed376aaf7422300"
+            }
+          ]
+        },
+        {
+          "message_id": "bd2795e0733961209e857f56f48d379b",
+          "relative_path": "_selected/allen-p/bd2795e0733961209e857f56f48d379b.json",
+          "local_path": "_selected/allen-p/bd2795e0733961209e857f56f48d379b.json",
+          "actual_sha256": "59f6737acf0b9dffcd9b8e7db774dd85d4d97ad836636b5b69271dd4d0a694de",
+          "attachments": [
+            {
+              "filename": "4-23-01.xls",
+              "relative_path": "_attachments/allen-p/bd2795e0733961209e857f56f48d379b/01_4-23-01.xls",
+              "local_path": "_attachments/allen-p/bd2795e0733961209e857f56f48d379b/01_4-23-01.xls",
+              "actual_sha256": "039ab4a742a15862bc5af705346f4910b434e291ef05e3323ed376aaf7422300"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:crescendo may first of the month nom",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "6db95e948ce7053110252b66d982166b",
+          "relative_path": "_selected/allen-p/6db95e948ce7053110252b66d982166b.json",
+          "local_path": "_selected/allen-p/6db95e948ce7053110252b66d982166b.json",
+          "actual_sha256": "714e3a33d5eb7edb67c275326b644ad27172039fb62c9570f4377de21ec18440",
+          "attachments": [
+            {
+              "filename": "5 01 noms.xls",
+              "relative_path": "_attachments/allen-p/6db95e948ce7053110252b66d982166b/01_5 01 noms.xls",
+              "local_path": "_attachments/allen-p/6db95e948ce7053110252b66d982166b/01_5 01 noms.xls",
+              "actual_sha256": "db33508f2d3d2ea77d97478035505f4a71e347ba61644ee5c75e3bbfd47f4018"
+            }
+          ]
+        },
+        {
+          "message_id": "fbc7f5f59841b4f23383b63358972984",
+          "relative_path": "_selected/allen-p/fbc7f5f59841b4f23383b63358972984.json",
+          "local_path": "_selected/allen-p/fbc7f5f59841b4f23383b63358972984.json",
+          "actual_sha256": "bfee0af8b5fb87b204de4de89095e6b0c99a9333ec4c349ede398b188a6f3aa0",
+          "attachments": [
+            {
+              "filename": "5 01 noms.xls",
+              "relative_path": "_attachments/allen-p/fbc7f5f59841b4f23383b63358972984/01_5 01 noms.xls",
+              "local_path": "_attachments/allen-p/fbc7f5f59841b4f23383b63358972984/01_5 01 noms.xls",
+              "actual_sha256": "db33508f2d3d2ea77d97478035505f4a71e347ba61644ee5c75e3bbfd47f4018"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:enron's may baseload deals as of 4/26/01",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "15f4143546ece2cbd42d8ecbed9f8be5",
+          "relative_path": "_selected/allen-p/15f4143546ece2cbd42d8ecbed9f8be5.json",
+          "local_path": "_selected/allen-p/15f4143546ece2cbd42d8ecbed9f8be5.json",
+          "actual_sha256": "eca0e73b213212e83dcfa19bf8f270391136738aa52ad0d0f88c48c23e41d945",
+          "attachments": [
+            {
+              "filename": "Fixed Price Physical Deals May_2001_04_26.xls",
+              "relative_path": "_attachments/allen-p/15f4143546ece2cbd42d8ecbed9f8be5/01_Fixed Price Physical Deals May_2001_04_26.xls",
+              "local_path": "_attachments/allen-p/15f4143546ece2cbd42d8ecbed9f8be5/01_Fixed Price Physical Deals May_2001_04_26.xls",
+              "actual_sha256": "2098abf937852551e8180da86abb231d8cd81f3ec2ea8facf1704ec2ea795107"
+            }
+          ]
+        },
+        {
+          "message_id": "88347d6043ec4c5e4d46ecc0a364e4dd",
+          "relative_path": "_selected/allen-p/88347d6043ec4c5e4d46ecc0a364e4dd.json",
+          "local_path": "_selected/allen-p/88347d6043ec4c5e4d46ecc0a364e4dd.json",
+          "actual_sha256": "8d1ba4d0e513e5a998a116e043bf5cfcb53b122cb3f39a5bd133f0ddadd7981e",
+          "attachments": [
+            {
+              "filename": "Fixed Price Physical Deals May_2001_04_26.xls",
+              "relative_path": "_attachments/allen-p/88347d6043ec4c5e4d46ecc0a364e4dd/01_Fixed Price Physical Deals May_2001_04_26.xls",
+              "local_path": "_attachments/allen-p/88347d6043ec4c5e4d46ecc0a364e4dd/01_Fixed Price Physical Deals May_2001_04_26.xls",
+              "actual_sha256": "2098abf937852551e8180da86abb231d8cd81f3ec2ea8facf1704ec2ea795107"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:enron's may baseload transactions as of 4/24/01",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "344ee8f3c8ed1a66ce00425ae0ca424f",
+          "relative_path": "_selected/allen-p/344ee8f3c8ed1a66ce00425ae0ca424f.json",
+          "local_path": "_selected/allen-p/344ee8f3c8ed1a66ce00425ae0ca424f.json",
+          "actual_sha256": "d3eb8ce631d6bd37991dbfca66469ead4b49fe9505b175dae5e20fdfd9aae628",
+          "attachments": [
+            {
+              "filename": "Fixed Price Physical Deals May_2001_04_24.xls",
+              "relative_path": "_attachments/allen-p/344ee8f3c8ed1a66ce00425ae0ca424f/01_Fixed Price Physical Deals May_2001_04_24.xls",
+              "local_path": "_attachments/allen-p/344ee8f3c8ed1a66ce00425ae0ca424f/01_Fixed Price Physical Deals May_2001_04_24.xls",
+              "actual_sha256": "f761c620993a9123925fb4ead42dfbdc7b7fc2c74610185bac03c4a9db05f2ca"
+            }
+          ]
+        },
+        {
+          "message_id": "e8064bdbf4b968ded4313663557f8278",
+          "relative_path": "_selected/allen-p/e8064bdbf4b968ded4313663557f8278.json",
+          "local_path": "_selected/allen-p/e8064bdbf4b968ded4313663557f8278.json",
+          "actual_sha256": "d4f14d550a9f32b4724783ebdd7ae3ae5da89f11cd247ecfa7ee6e671977a467",
+          "attachments": [
+            {
+              "filename": "Fixed Price Physical Deals May_2001_04_24.xls",
+              "relative_path": "_attachments/allen-p/e8064bdbf4b968ded4313663557f8278/01_Fixed Price Physical Deals May_2001_04_24.xls",
+              "local_path": "_attachments/allen-p/e8064bdbf4b968ded4313663557f8278/01_Fixed Price Physical Deals May_2001_04_24.xls",
+              "actual_sha256": "f761c620993a9123925fb4ead42dfbdc7b7fc2c74610185bac03c4a9db05f2ca"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:ferc request - please coordinate with legal and business",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "591940d40e409603bcd0b4191dcc2ece",
+          "relative_path": "_selected/allen-p/591940d40e409603bcd0b4191dcc2ece.json",
+          "local_path": "_selected/allen-p/591940d40e409603bcd0b4191dcc2ece.json",
+          "actual_sha256": "51ba6ff2d06053baed3a935035ff09c4f62790b037c3632443da8add52ca8ff4",
+          "attachments": [
+            {
+              "filename": "#1.dat",
+              "relative_path": "_attachments/allen-p/591940d40e409603bcd0b4191dcc2ece/01_#1.dat",
+              "local_path": "_attachments/allen-p/591940d40e409603bcd0b4191dcc2ece/01_#1.dat",
+              "actual_sha256": "f6b667f2fc82fc7093d2569e3d2938b07783d207a18b3488cffe7d6899270187"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:ina - vacation",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "0660301bf3b614756f8bc6c53889f21f",
+          "relative_path": "_selected/allen-p/0660301bf3b614756f8bc6c53889f21f.json",
+          "local_path": "_selected/allen-p/0660301bf3b614756f8bc6c53889f21f.json",
+          "actual_sha256": "6d1160619b9f35c98077044206117f19091cec33b8681426fed98fc69ac28da6",
+          "attachments": []
+        },
+        {
+          "message_id": "d9ddf0c0cc314ef12e3953fd7a070242",
+          "relative_path": "_selected/allen-p/d9ddf0c0cc314ef12e3953fd7a070242.json",
+          "local_path": "_selected/allen-p/d9ddf0c0cc314ef12e3953fd7a070242.json",
+          "actual_sha256": "25ce81b41139018ea1151103fd59591a383a5298e38727821bd3f988e39a4a5b",
+          "attachments": []
+        },
+        {
+          "message_id": "62a40513696a93c3f864d8d1bf2a6257",
+          "relative_path": "_selected/allen-p/62a40513696a93c3f864d8d1bf2a6257.json",
+          "local_path": "_selected/allen-p/62a40513696a93c3f864d8d1bf2a6257.json",
+          "actual_sha256": "64b95e4f29094b263c86d1dc90885d6d9e190e24a16a9d78f3304621a20f6bb5",
+          "attachments": []
+        },
+        {
+          "message_id": "d68c759bb99689b61928f1f5c3885d7d",
+          "relative_path": "_selected/allen-p/d68c759bb99689b61928f1f5c3885d7d.json",
+          "local_path": "_selected/allen-p/d68c759bb99689b61928f1f5c3885d7d.json",
+          "actual_sha256": "b3f7e740397bc18fce1362b7c67771eb657524ed307f70148def891fb852c4ff",
+          "attachments": []
+        },
+        {
+          "message_id": "42f14b890fb0ac50f99069736c394dfe",
+          "relative_path": "_selected/allen-p/42f14b890fb0ac50f99069736c394dfe.json",
+          "local_path": "_selected/allen-p/42f14b890fb0ac50f99069736c394dfe.json",
+          "actual_sha256": "0772c995fae848ca9c6875c3c10faa12b275a58a13a0bddc35e24dad610aeb86",
+          "attachments": []
+        },
+        {
+          "message_id": "cf58198c835eb42391fcc42c7322dda6",
+          "relative_path": "_selected/allen-p/cf58198c835eb42391fcc42c7322dda6.json",
+          "local_path": "_selected/allen-p/cf58198c835eb42391fcc42c7322dda6.json",
+          "actual_sha256": "715942e23e86fc0a1c2f0011439dfd7659abd79e2688dfcfa556f67947c8f11d",
+          "attachments": []
+        },
+        {
+          "message_id": "6f35e25edafbe14424d82884117e94a0",
+          "relative_path": "_selected/allen-p/6f35e25edafbe14424d82884117e94a0.json",
+          "local_path": "_selected/allen-p/6f35e25edafbe14424d82884117e94a0.json",
+          "actual_sha256": "631ed740417e3901f2162b68094710ed8d6ad896ef57c9a725c102716e108181",
+          "attachments": []
+        },
+        {
+          "message_id": "86289a6d3912c78709b317aaea4864c6",
+          "relative_path": "_selected/allen-p/86289a6d3912c78709b317aaea4864c6.json",
+          "local_path": "_selected/allen-p/86289a6d3912c78709b317aaea4864c6.json",
+          "actual_sha256": "5dabbb22e3804c0eb3f1267f3392f16577464e4cc61ef1bf042537f90132271b",
+          "attachments": []
+        },
+        {
+          "message_id": "53371ef93ac8bcb3405ee8cc11463caf",
+          "relative_path": "_selected/allen-p/53371ef93ac8bcb3405ee8cc11463caf.json",
+          "local_path": "_selected/allen-p/53371ef93ac8bcb3405ee8cc11463caf.json",
+          "actual_sha256": "3e1f30e00f7b124099808fe3ec82acdc805ed03b0d6b8e5fa66371f854c65d5b",
+          "attachments": []
+        },
+        {
+          "message_id": "db8d765457bb48b39fb2c0392b7521e6",
+          "relative_path": "_selected/allen-p/db8d765457bb48b39fb2c0392b7521e6.json",
+          "local_path": "_selected/allen-p/db8d765457bb48b39fb2c0392b7521e6.json",
+          "actual_sha256": "b8755b8478ed7ca6ffbe1e342f204e938327a540bded628cd15c9d003ac9295c",
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:instructions for ferc meetings",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "1470ef1f41430243b4f19782582e071a",
+          "relative_path": "_selected/allen-p/1470ef1f41430243b4f19782582e071a.json",
+          "local_path": "_selected/allen-p/1470ef1f41430243b4f19782582e071a.json",
+          "actual_sha256": "25aa21e69affa7add8e549f2ccecb9ad3e8c9388cdefbc3e234807b44ec5f847",
+          "attachments": []
+        },
+        {
+          "message_id": "2e9d3ac82e25f2e41be0f66124344278",
+          "relative_path": "_selected/allen-p/2e9d3ac82e25f2e41be0f66124344278.json",
+          "local_path": "_selected/allen-p/2e9d3ac82e25f2e41be0f66124344278.json",
+          "actual_sha256": "46ec17b89a1419ae8d89cef408b2f30c478ccd7f8513f56ac805956b33ff26eb",
+          "attachments": []
+        },
+        {
+          "message_id": "45645571a4e0600530a613a8ce505773",
+          "relative_path": "_selected/allen-p/45645571a4e0600530a613a8ce505773.json",
+          "local_path": "_selected/allen-p/45645571a4e0600530a613a8ce505773.json",
+          "actual_sha256": "a6c0c09b311191cfb19e793073c60905e273b2b68ad82087230884530e928210",
+          "attachments": []
+        },
+        {
+          "message_id": "497dcb89e433a492ceca1e8463d29a7e",
+          "relative_path": "_selected/allen-p/497dcb89e433a492ceca1e8463d29a7e.json",
+          "local_path": "_selected/allen-p/497dcb89e433a492ceca1e8463d29a7e.json",
+          "actual_sha256": "4b2b99f3d4cf4a3124c005df635e70037ae0ebb0aa628cb7d7d57899d7287da8",
+          "attachments": []
+        },
+        {
+          "message_id": "69600977a1b06e3d777a65bb7cae6c30",
+          "relative_path": "_selected/allen-p/69600977a1b06e3d777a65bb7cae6c30.json",
+          "local_path": "_selected/allen-p/69600977a1b06e3d777a65bb7cae6c30.json",
+          "actual_sha256": "be0e86fef95a75afa160a7b1c01b3e4b06d4a312bc68b0309f285e7b014192d9",
+          "attachments": []
+        },
+        {
+          "message_id": "a2a034715eda806b318678499538f5d1",
+          "relative_path": "_selected/allen-p/a2a034715eda806b318678499538f5d1.json",
+          "local_path": "_selected/allen-p/a2a034715eda806b318678499538f5d1.json",
+          "actual_sha256": "a85e49305a6ce031ba47cb0b7867c562a39bea6cd37fd7d1a4efb1ec5cc5f99c",
+          "attachments": []
+        },
+        {
+          "message_id": "ada2d754c80d1541b1994f6b66c0740c",
+          "relative_path": "_selected/allen-p/ada2d754c80d1541b1994f6b66c0740c.json",
+          "local_path": "_selected/allen-p/ada2d754c80d1541b1994f6b66c0740c.json",
+          "actual_sha256": "5c276d4e641ccbbf8983f74f8fc0b5b92c338e3416c06dcde1703043bea9f9be",
+          "attachments": []
+        },
+        {
+          "message_id": "aeb622f2fe90e384f10b6489c5bcc917",
+          "relative_path": "_selected/allen-p/aeb622f2fe90e384f10b6489c5bcc917.json",
+          "local_path": "_selected/allen-p/aeb622f2fe90e384f10b6489c5bcc917.json",
+          "actual_sha256": "032639042b7a1e70c1ca29931253d5b54cedfb23694a6fface9802c17750222b",
+          "attachments": []
+        },
+        {
+          "message_id": "c7df37e0cb2d86f25e53cf331d14421b",
+          "relative_path": "_selected/allen-p/c7df37e0cb2d86f25e53cf331d14421b.json",
+          "local_path": "_selected/allen-p/c7df37e0cb2d86f25e53cf331d14421b.json",
+          "actual_sha256": "64646d97cb59f40366cd915c2f2616fa32064845d74d4ea6fb011df2fd4c317a",
+          "attachments": []
+        },
+        {
+          "message_id": "fab4f16b1d503e2c71c2afcc780c6fb5",
+          "relative_path": "_selected/allen-p/fab4f16b1d503e2c71c2afcc780c6fb5.json",
+          "local_path": "_selected/allen-p/fab4f16b1d503e2c71c2afcc780c6fb5.json",
+          "actual_sha256": "9661ebcfb2136ded51151d337b372573d9c8fdc42148fc54083641506889943b",
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:new notice from transwestern pipeline co.",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "24f89cacf07af370ebca8383014fd5d2",
+          "relative_path": "_selected/allen-p/24f89cacf07af370ebca8383014fd5d2.json",
+          "local_path": "_selected/allen-p/24f89cacf07af370ebca8383014fd5d2.json",
+          "actual_sha256": "bbabf709a9e12ab4972b8a34e537a6e9e1591b6308162aec78e74a2cd66ffbdf",
+          "attachments": []
+        },
+        {
+          "message_id": "b9c3908587646d26149adf36999ad7df",
+          "relative_path": "_selected/allen-p/b9c3908587646d26149adf36999ad7df.json",
+          "local_path": "_selected/allen-p/b9c3908587646d26149adf36999ad7df.json",
+          "actual_sha256": "2c5fcea254f246e5a59bb81155de9655daf46e76efaa886f22f98464af6dc278",
+          "attachments": []
+        },
+        {
+          "message_id": "e914cbdf33357f502050d88785c37fdf",
+          "relative_path": "_selected/allen-p/e914cbdf33357f502050d88785c37fdf.json",
+          "local_path": "_selected/allen-p/e914cbdf33357f502050d88785c37fdf.json",
+          "actual_sha256": "12cbf253abb5b08790b68dcd96d2f504dcace5d237b655f12055e6871992850e",
+          "attachments": []
+        },
+        {
+          "message_id": "35f48564c1c06f78d90920cae480d5da",
+          "relative_path": "_selected/allen-p/35f48564c1c06f78d90920cae480d5da.json",
+          "local_path": "_selected/allen-p/35f48564c1c06f78d90920cae480d5da.json",
+          "actual_sha256": "7041be4c328bb816a7a808930717a3b6e301390f1074d80b58b947317344bf3a",
+          "attachments": []
+        },
+        {
+          "message_id": "62bf740a24fe766179e2ce809356ca34",
+          "relative_path": "_selected/allen-p/62bf740a24fe766179e2ce809356ca34.json",
+          "local_path": "_selected/allen-p/62bf740a24fe766179e2ce809356ca34.json",
+          "actual_sha256": "b06ed06094634b787831061220611b69eae32fd2b390520327b29d9a12ab9d39",
+          "attachments": []
+        },
+        {
+          "message_id": "db45298002e71da33a7b0d84f9d95836",
+          "relative_path": "_selected/allen-p/db45298002e71da33a7b0d84f9d95836.json",
+          "local_path": "_selected/allen-p/db45298002e71da33a7b0d84f9d95836.json",
+          "actual_sha256": "bc3e9b52ad7ead16024b8b546fb51b20c29bb568149bde908c34f4b0b249a6eb",
+          "attachments": []
+        },
+        {
+          "message_id": "2761f695c217cda47197502be5b61ec3",
+          "relative_path": "_selected/allen-p/2761f695c217cda47197502be5b61ec3.json",
+          "local_path": "_selected/allen-p/2761f695c217cda47197502be5b61ec3.json",
+          "actual_sha256": "054aa7eb2d6162e0d61333dfb4dd1424f0d4f8e1a7bb428c566376763cc8ee44",
+          "attachments": []
+        },
+        {
+          "message_id": "52c1c3c5f8e47003783242fd6774843f",
+          "relative_path": "_selected/allen-p/52c1c3c5f8e47003783242fd6774843f.json",
+          "local_path": "_selected/allen-p/52c1c3c5f8e47003783242fd6774843f.json",
+          "actual_sha256": "ede168a07dbec9a351787f9d4c4dac1206a55ed714cf15d9b604276560d8640c",
+          "attachments": []
+        },
+        {
+          "message_id": "a0f7c248e305b549f99fe62a9db295e3",
+          "relative_path": "_selected/allen-p/a0f7c248e305b549f99fe62a9db295e3.json",
+          "local_path": "_selected/allen-p/a0f7c248e305b549f99fe62a9db295e3.json",
+          "actual_sha256": "43253ebbfe4b57aef059bb443d6dd4725a86aaf8e8f400a82ffca5a8dbec916a",
+          "attachments": []
+        },
+        {
+          "message_id": "098ceb9822f35388e2c188e58d810c58",
+          "relative_path": "_selected/allen-p/098ceb9822f35388e2c188e58d810c58.json",
+          "local_path": "_selected/allen-p/098ceb9822f35388e2c188e58d810c58.json",
+          "actual_sha256": "ed8fdff41b3a7849da674120f5450e252c55279c2cae6dd25537585f0fc323a4",
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:ngi access to eol",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "33a2ae6a5664cdef5510490f97aecab3",
+          "relative_path": "_selected/allen-p/33a2ae6a5664cdef5510490f97aecab3.json",
+          "local_path": "_selected/allen-p/33a2ae6a5664cdef5510490f97aecab3.json",
+          "actual_sha256": "c928c2852f9f0e7e0927672df1ea8518c565b75b35e75a6076f63dd6fd07af0f",
+          "attachments": []
+        },
+        {
+          "message_id": "738df7eff06c55993d77ce62ba539ae1",
+          "relative_path": "_selected/allen-p/738df7eff06c55993d77ce62ba539ae1.json",
+          "local_path": "_selected/allen-p/738df7eff06c55993d77ce62ba539ae1.json",
+          "actual_sha256": "bd24d43614562943caea5f982645e60d7a1e48956b720a6e24af102284d5b737",
+          "attachments": []
+        },
+        {
+          "message_id": "de073b7e9aadb026406ab5a8f94e9e1a",
+          "relative_path": "_selected/allen-p/de073b7e9aadb026406ab5a8f94e9e1a.json",
+          "local_path": "_selected/allen-p/de073b7e9aadb026406ab5a8f94e9e1a.json",
+          "actual_sha256": "7867d192dbfd8c0db697ac47fab8b4a006c1c0ec9071bf714f1cc116401e9a0a",
+          "attachments": []
+        },
+        {
+          "message_id": "ecad24bb324cf4a89dd3899f40a55fe5",
+          "relative_path": "_selected/allen-p/ecad24bb324cf4a89dd3899f40a55fe5.json",
+          "local_path": "_selected/allen-p/ecad24bb324cf4a89dd3899f40a55fe5.json",
+          "actual_sha256": "e3686855c27734e3370b3d7545c6981b75e76392658ee49329cfd88f80300cd0",
+          "attachments": []
+        },
+        {
+          "message_id": "42326835577f0ccd1997e2dad7ada711",
+          "relative_path": "_selected/allen-p/42326835577f0ccd1997e2dad7ada711.json",
+          "local_path": "_selected/allen-p/42326835577f0ccd1997e2dad7ada711.json",
+          "actual_sha256": "2c1a3d9b8f87134354294db9a98d1aaf144e0d28dbe7cdf7994baad9f3f99387",
+          "attachments": []
+        },
+        {
+          "message_id": "d07ff5e6641a8d5d69da28574e43f32f",
+          "relative_path": "_selected/allen-p/d07ff5e6641a8d5d69da28574e43f32f.json",
+          "local_path": "_selected/allen-p/d07ff5e6641a8d5d69da28574e43f32f.json",
+          "actual_sha256": "e3a9f443b209ea33205446a5e5b49237c38f6554fdecdb86dfe6f30c5c95b2d0",
+          "attachments": []
+        },
+        {
+          "message_id": "f2526fc24d888dd277ef601d7cfad0aa",
+          "relative_path": "_selected/allen-p/f2526fc24d888dd277ef601d7cfad0aa.json",
+          "local_path": "_selected/allen-p/f2526fc24d888dd277ef601d7cfad0aa.json",
+          "actual_sha256": "2afa7cc3e139ee7417cac4cc9c8b7426a88d71ac0ab2e2300a21cf8c13fd7191",
+          "attachments": []
+        },
+        {
+          "message_id": "36d36fcb353c2405e6c7b22f80f41bff",
+          "relative_path": "_selected/allen-p/36d36fcb353c2405e6c7b22f80f41bff.json",
+          "local_path": "_selected/allen-p/36d36fcb353c2405e6c7b22f80f41bff.json",
+          "actual_sha256": "7b539e97671b6f79f2db63b1136f43889d6ed0441126ca033e6821561eb9e286",
+          "attachments": []
+        },
+        {
+          "message_id": "91b35d2fd249879fe4f3c6f17b899b10",
+          "relative_path": "_selected/allen-p/91b35d2fd249879fe4f3c6f17b899b10.json",
+          "local_path": "_selected/allen-p/91b35d2fd249879fe4f3c6f17b899b10.json",
+          "actual_sha256": "19a7d79d63e4dfe391a5c05d1e41dc70f1272da1de40561f8d8f9f8d0aaadfc0",
+          "attachments": []
+        },
+        {
+          "message_id": "dd9f31e9e05a41d99b2f50908673bac5",
+          "relative_path": "_selected/allen-p/dd9f31e9e05a41d99b2f50908673bac5.json",
+          "local_path": "_selected/allen-p/dd9f31e9e05a41d99b2f50908673bac5.json",
+          "actual_sha256": "2a7a77c05053e935e80e675ebea3198f6972660ca97ebb3f9cbf0e50dd92faf5",
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:presentation to trading track a&a",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "2c3fcf8acf919fdd50dddf2c3ddd5c4c",
+          "relative_path": "_selected/allen-p/2c3fcf8acf919fdd50dddf2c3ddd5c4c.json",
+          "local_path": "_selected/allen-p/2c3fcf8acf919fdd50dddf2c3ddd5c4c.json",
+          "actual_sha256": "e2aecee42d21980ef03b2ebc2fb585aab35d447e3aa7a355430f1c28d2e8e58d",
+          "attachments": []
+        },
+        {
+          "message_id": "6d9d0100925a791075a0f662e1922275",
+          "relative_path": "_selected/allen-p/6d9d0100925a791075a0f662e1922275.json",
+          "local_path": "_selected/allen-p/6d9d0100925a791075a0f662e1922275.json",
+          "actual_sha256": "939845a331a204c3afc5a521ba8e9edf1c33aef39c12d5677a433d0802028961",
+          "attachments": []
+        },
+        {
+          "message_id": "d2b064f0e1be8aade720eae5f01b6ec9",
+          "relative_path": "_selected/allen-p/d2b064f0e1be8aade720eae5f01b6ec9.json",
+          "local_path": "_selected/allen-p/d2b064f0e1be8aade720eae5f01b6ec9.json",
+          "actual_sha256": "5ed9c7fa3f41bbbab1f4d9f9b62592bb1f25d74aedad77671adfe5fbecff5c72",
+          "attachments": []
+        },
+        {
+          "message_id": "189f6bacef978de1ceafc7fbef1bc730",
+          "relative_path": "_selected/allen-p/189f6bacef978de1ceafc7fbef1bc730.json",
+          "local_path": "_selected/allen-p/189f6bacef978de1ceafc7fbef1bc730.json",
+          "actual_sha256": "b6e6d1b233e2766adef75486a844fb67d5089ee590c4a2ee7732a401df312e22",
+          "attachments": []
+        },
+        {
+          "message_id": "d196e73e8748f21aa47084f2e0e91fdb",
+          "relative_path": "_selected/allen-p/d196e73e8748f21aa47084f2e0e91fdb.json",
+          "local_path": "_selected/allen-p/d196e73e8748f21aa47084f2e0e91fdb.json",
+          "actual_sha256": "f1294c295d22f1478750ad8d4495d1ca0a62c1c68596797506c00c4393976ca7",
+          "attachments": []
+        },
+        {
+          "message_id": "d5b766d15a491bb4f8c112bc65f944e5",
+          "relative_path": "_selected/allen-p/d5b766d15a491bb4f8c112bc65f944e5.json",
+          "local_path": "_selected/allen-p/d5b766d15a491bb4f8c112bc65f944e5.json",
+          "actual_sha256": "8c1de83427eb2dfdee19c690d51ba744f8e7287cde4c537b1e73e14c35f399ae",
+          "attachments": []
+        },
+        {
+          "message_id": "ea121c2e4c0803631f97d64083c71883",
+          "relative_path": "_selected/allen-p/ea121c2e4c0803631f97d64083c71883.json",
+          "local_path": "_selected/allen-p/ea121c2e4c0803631f97d64083c71883.json",
+          "actual_sha256": "cc260716a581da1e7395524e676281a7ac4627d3d2e301a6167886ecdb0c3090",
+          "attachments": []
+        },
+        {
+          "message_id": "a1d20be4f22b0d1d724d98d9a946b67e",
+          "relative_path": "_selected/allen-p/a1d20be4f22b0d1d724d98d9a946b67e.json",
+          "local_path": "_selected/allen-p/a1d20be4f22b0d1d724d98d9a946b67e.json",
+          "actual_sha256": "d9dc938b7a4f503db15803d51137b50cba1a9f081576435792a6d9e0489c5997",
+          "attachments": []
+        },
+        {
+          "message_id": "b704579398a86089423c20641b3fcb42",
+          "relative_path": "_selected/allen-p/b704579398a86089423c20641b3fcb42.json",
+          "local_path": "_selected/allen-p/b704579398a86089423c20641b3fcb42.json",
+          "actual_sha256": "d72ffe90520d8a59563ef4748e9938b78e95f54187a0b0414af49bda2bb018ce",
+          "attachments": []
+        },
+        {
+          "message_id": "1848ada3561b0dce946ac33d7e393cb4",
+          "relative_path": "_selected/allen-p/1848ada3561b0dce946ac33d7e393cb4.json",
+          "local_path": "_selected/allen-p/1848ada3561b0dce946ac33d7e393cb4.json",
+          "actual_sha256": "4d52991b14a918fb0ad17b1eb8a253c43f40309978d95282b73a19eb78767c75",
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:resume",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "004ba8b9156c71cc3b9485186e6b7ab2",
+          "relative_path": "_selected/allen-p/004ba8b9156c71cc3b9485186e6b7ab2.json",
+          "local_path": "_selected/allen-p/004ba8b9156c71cc3b9485186e6b7ab2.json",
+          "actual_sha256": "1a93468cc1d9eb429e7fd5469daac9cc1629521a1210b629dc5595ffcb43ee51",
+          "attachments": []
+        },
+        {
+          "message_id": "0b2e22bae9c4eee974a66c43bba824b6",
+          "relative_path": "_selected/allen-p/0b2e22bae9c4eee974a66c43bba824b6.json",
+          "local_path": "_selected/allen-p/0b2e22bae9c4eee974a66c43bba824b6.json",
+          "actual_sha256": "99e78e52a9f5bf892a37855f2851a490d8866de9e9e8182713fdce9d700b47b5",
+          "attachments": []
+        },
+        {
+          "message_id": "30885b63aa911314dce491128feacfa6",
+          "relative_path": "_selected/allen-p/30885b63aa911314dce491128feacfa6.json",
+          "local_path": "_selected/allen-p/30885b63aa911314dce491128feacfa6.json",
+          "actual_sha256": "6cf1f90607aaefe41df3e50c208576e082a29765490290597c5e0145afe5a13b",
+          "attachments": []
+        },
+        {
+          "message_id": "31a128cda17b6e109ac628214bc04458",
+          "relative_path": "_selected/allen-p/31a128cda17b6e109ac628214bc04458.json",
+          "local_path": "_selected/allen-p/31a128cda17b6e109ac628214bc04458.json",
+          "actual_sha256": "974fa571412c2efc0c724f9cdc0bf30215fd2bd6785ddc110103c0858c664d0c",
+          "attachments": []
+        },
+        {
+          "message_id": "4d6f5d27b7e08fb33e6cc3c3c1d5c83d",
+          "relative_path": "_selected/allen-p/4d6f5d27b7e08fb33e6cc3c3c1d5c83d.json",
+          "local_path": "_selected/allen-p/4d6f5d27b7e08fb33e6cc3c3c1d5c83d.json",
+          "actual_sha256": "93f0650fd44865cbbfb27b4ff2ffd499f6cf3fd26779c65315652e50580b54e4",
+          "attachments": []
+        },
+        {
+          "message_id": "58a17f722e1c3aebf72561b271ce5169",
+          "relative_path": "_selected/allen-p/58a17f722e1c3aebf72561b271ce5169.json",
+          "local_path": "_selected/allen-p/58a17f722e1c3aebf72561b271ce5169.json",
+          "actual_sha256": "a86179813b060af6619ffe92f38da6d9b9f9cc4bc3a6c1ad8fe2c61386e7c607",
+          "attachments": []
+        },
+        {
+          "message_id": "3b67a63ccfda7bbb248a2df36cd39b5c",
+          "relative_path": "_selected/allen-p/3b67a63ccfda7bbb248a2df36cd39b5c.json",
+          "local_path": "_selected/allen-p/3b67a63ccfda7bbb248a2df36cd39b5c.json",
+          "actual_sha256": "e41239171f39cddc6ee1ec567ee868c4a10d5f5fba43a0901d6161fec8fe8475",
+          "attachments": []
+        },
+        {
+          "message_id": "d8ff3726f0b4f2c080eaaf639059c62e",
+          "relative_path": "_selected/allen-p/d8ff3726f0b4f2c080eaaf639059c62e.json",
+          "local_path": "_selected/allen-p/d8ff3726f0b4f2c080eaaf639059c62e.json",
+          "actual_sha256": "13269b5027705e31e6a25d209050b08f5686bdf7e619173ec9c405d50953aab4",
+          "attachments": []
+        },
+        {
+          "message_id": "967659cb151d114f04d561fde93efa20",
+          "relative_path": "_selected/allen-p/967659cb151d114f04d561fde93efa20.json",
+          "local_path": "_selected/allen-p/967659cb151d114f04d561fde93efa20.json",
+          "actual_sha256": "22727637bf55b65e015c0cfdf9ddbe60c7e524b08f3ca808a7b010a88a8df4b2",
+          "attachments": []
+        },
+        {
+          "message_id": "d1edaa33f266db9d9a30b3cd244a4aa0",
+          "relative_path": "_selected/allen-p/d1edaa33f266db9d9a30b3cd244a4aa0.json",
+          "local_path": "_selected/allen-p/d1edaa33f266db9d9a30b3cd244a4aa0.json",
+          "actual_sha256": "7a7247ac4e42812c033728f98702ee88030487d59d0c217cd11c3ab3328ff083",
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:the stage",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "11bdb55acbfae25964626bd5487c1c08",
+          "relative_path": "_selected/allen-p/11bdb55acbfae25964626bd5487c1c08.json",
+          "local_path": "_selected/allen-p/11bdb55acbfae25964626bd5487c1c08.json",
+          "actual_sha256": "5e6a4e1425cfee96a2230f98d8e5b9424b440b44271b76101d738515dc5e3d4d",
+          "attachments": []
+        },
+        {
+          "message_id": "be164f8ef001b6ce36d2835fa4557b51",
+          "relative_path": "_selected/allen-p/be164f8ef001b6ce36d2835fa4557b51.json",
+          "local_path": "_selected/allen-p/be164f8ef001b6ce36d2835fa4557b51.json",
+          "actual_sha256": "48bafea188c124b6c84b7b01305befb31be4f836e372301bacd1375277ee361b",
+          "attachments": []
+        },
+        {
+          "message_id": "fc85ef94d29741ee2825230a7d51d5a8",
+          "relative_path": "_selected/allen-p/fc85ef94d29741ee2825230a7d51d5a8.json",
+          "local_path": "_selected/allen-p/fc85ef94d29741ee2825230a7d51d5a8.json",
+          "actual_sha256": "49bc6be76bd7c3280715ec2d2f25d38e9a0e366e9abffcae5dd87c700672839b",
+          "attachments": []
+        },
+        {
+          "message_id": "98b23ca0a509365e4bac0360ef604452",
+          "relative_path": "_selected/allen-p/98b23ca0a509365e4bac0360ef604452.json",
+          "local_path": "_selected/allen-p/98b23ca0a509365e4bac0360ef604452.json",
+          "actual_sha256": "2856943ac63022e54bf682817ea482d06584f1fd9463d485d0a2475835a7a805",
+          "attachments": []
+        },
+        {
+          "message_id": "bf4c66933819ec487d8ba9c64c178b0b",
+          "relative_path": "_selected/allen-p/bf4c66933819ec487d8ba9c64c178b0b.json",
+          "local_path": "_selected/allen-p/bf4c66933819ec487d8ba9c64c178b0b.json",
+          "actual_sha256": "49600a7f0d9fede7ef49f1920ddf5d5c7e8b3c2f6e2db829d0e04df415a6fe7a",
+          "attachments": []
+        },
+        {
+          "message_id": "ee2379042c3eccd8de1910c46d9ef30e",
+          "relative_path": "_selected/allen-p/ee2379042c3eccd8de1910c46d9ef30e.json",
+          "local_path": "_selected/allen-p/ee2379042c3eccd8de1910c46d9ef30e.json",
+          "actual_sha256": "2c539929b608256ba98aac633f551f2a8ffb8f7154dbc24feaa24f61cc511b3e",
+          "attachments": []
+        },
+        {
+          "message_id": "f1fe159cba9a7f06c1980242cd58a6f8",
+          "relative_path": "_selected/allen-p/f1fe159cba9a7f06c1980242cd58a6f8.json",
+          "local_path": "_selected/allen-p/f1fe159cba9a7f06c1980242cd58a6f8.json",
+          "actual_sha256": "433931fbbfa29ca3b9fedd4b1fa9da452afd19b9ea6f550e47ff07a50ab9a808",
+          "attachments": []
+        },
+        {
+          "message_id": "0264ea2eca306b06f3e518149a0966e4",
+          "relative_path": "_selected/allen-p/0264ea2eca306b06f3e518149a0966e4.json",
+          "local_path": "_selected/allen-p/0264ea2eca306b06f3e518149a0966e4.json",
+          "actual_sha256": "d28a8bcd1ebcdb513e8f33f45bd7c756a37f80afe24f4e1872853a0f4e23b2d3",
+          "attachments": []
+        },
+        {
+          "message_id": "2c21ba56c6d2c89cd3e3186540cf5ab6",
+          "relative_path": "_selected/allen-p/2c21ba56c6d2c89cd3e3186540cf5ab6.json",
+          "local_path": "_selected/allen-p/2c21ba56c6d2c89cd3e3186540cf5ab6.json",
+          "actual_sha256": "eb4fcc72bd4e9e3a84b67ddca4cc28fa82239aaf20851b55e628db9f43577e15",
+          "attachments": []
+        },
+        {
+          "message_id": "ba72b916edaf436e8637a2ba1030b012",
+          "relative_path": "_selected/allen-p/ba72b916edaf436e8637a2ba1030b012.json",
+          "local_path": "_selected/allen-p/ba72b916edaf436e8637a2ba1030b012.json",
+          "actual_sha256": "2d00a3a04f165c818c7242fcee9fe042729d3e8f9f8e58385d870268a7b16d01",
+          "attachments": []
+        }
+      ]
+    },
+    {
+      "thread_key": "allen-p:traders weekly roundtable meeting - eb3330",
+      "mailbox": "allen-p",
+      "messages": [
+        {
+          "message_id": "03f09cdcb8ac75d21f679f7af54ae0c4",
+          "relative_path": "_selected/allen-p/03f09cdcb8ac75d21f679f7af54ae0c4.json",
+          "local_path": "_selected/allen-p/03f09cdcb8ac75d21f679f7af54ae0c4.json",
+          "actual_sha256": "fd8f38f3f588bac995a8958a0b88faf84c439afac93c2d4fb1dec6e8b5ec1beb",
+          "attachments": []
+        },
+        {
+          "message_id": "9cc172b33576afb25b82063e0daaf9df",
+          "relative_path": "_selected/allen-p/9cc172b33576afb25b82063e0daaf9df.json",
+          "local_path": "_selected/allen-p/9cc172b33576afb25b82063e0daaf9df.json",
+          "actual_sha256": "2bdca56d723ece50040a660bbc76e6a3e8060bc11041999da500579b8f490032",
+          "attachments": []
+        },
+        {
+          "message_id": "a951d39cdc3a7503bce1710ac453f938",
+          "relative_path": "_selected/allen-p/a951d39cdc3a7503bce1710ac453f938.json",
+          "local_path": "_selected/allen-p/a951d39cdc3a7503bce1710ac453f938.json",
+          "actual_sha256": "b0ae8876c903f7f6dfb6957921da497bb0857fec51ee29657da0be838db8d9a4",
+          "attachments": []
+        },
+        {
+          "message_id": "aa5ab2a0cb695866caf7d069964bad6a",
+          "relative_path": "_selected/allen-p/aa5ab2a0cb695866caf7d069964bad6a.json",
+          "local_path": "_selected/allen-p/aa5ab2a0cb695866caf7d069964bad6a.json",
+          "actual_sha256": "b415e7b6e718a583717cb621756243587bffdf0513b76ada421954d7506cc61d",
+          "attachments": []
+        },
+        {
+          "message_id": "0df4528cde52fc9b2ac54ae1f3ee8d2b",
+          "relative_path": "_selected/allen-p/0df4528cde52fc9b2ac54ae1f3ee8d2b.json",
+          "local_path": "_selected/allen-p/0df4528cde52fc9b2ac54ae1f3ee8d2b.json",
+          "actual_sha256": "693ab55db7ecc3a9554cf445ada426ba5e2d1a9778f37bdfd45aa79d98539afb",
+          "attachments": []
+        },
+        {
+          "message_id": "aa01c198dc7ef59bc9e0876360270b16",
+          "relative_path": "_selected/allen-p/aa01c198dc7ef59bc9e0876360270b16.json",
+          "local_path": "_selected/allen-p/aa01c198dc7ef59bc9e0876360270b16.json",
+          "actual_sha256": "21611d397dc4c7fd6cff5771b372ffd8d81150681b84f80a17d80cdc4adc0926",
+          "attachments": []
+        },
+        {
+          "message_id": "042f3dc330008c12064c4963c6e5adcc",
+          "relative_path": "_selected/allen-p/042f3dc330008c12064c4963c6e5adcc.json",
+          "local_path": "_selected/allen-p/042f3dc330008c12064c4963c6e5adcc.json",
+          "actual_sha256": "25693ec79c0338ea69f64faf081e83f0c2252d2c8d630c4f6a6afb9853391f7f",
+          "attachments": []
+        },
+        {
+          "message_id": "b288c8a3a36756fdb08079cd2211f3f1",
+          "relative_path": "_selected/allen-p/b288c8a3a36756fdb08079cd2211f3f1.json",
+          "local_path": "_selected/allen-p/b288c8a3a36756fdb08079cd2211f3f1.json",
+          "actual_sha256": "3bf2b4ba32f5736eab92b2ae79fd82f97c8e4f627ecb34d64aa3cac429f99acc",
+          "attachments": []
+        },
+        {
+          "message_id": "71aa3e30fdc98670deea3eb2810c8fcd",
+          "relative_path": "_selected/allen-p/71aa3e30fdc98670deea3eb2810c8fcd.json",
+          "local_path": "_selected/allen-p/71aa3e30fdc98670deea3eb2810c8fcd.json",
+          "actual_sha256": "a363bb03a0a46b2b1c8ed800380b7a19d80ced5f58149bddc5fb44bfbd17f06d",
+          "attachments": []
+        },
+        {
+          "message_id": "bb4b3d5f79abf39ce0e03cf0fac5132e",
+          "relative_path": "_selected/allen-p/bb4b3d5f79abf39ce0e03cf0fac5132e.json",
+          "local_path": "_selected/allen-p/bb4b3d5f79abf39ce0e03cf0fac5132e.json",
+          "actual_sha256": "1d3112bc63a53d4d8e28eafe46a4ebc97dc55c50bc655073c58b379e932c4371",
+          "attachments": []
+        }
+      ]
+    }
+  ],
+  "resolved_counts": {
+    "thread_count": 20,
+    "message_count": 107,
+    "attachment_count": 23
+  }
+}

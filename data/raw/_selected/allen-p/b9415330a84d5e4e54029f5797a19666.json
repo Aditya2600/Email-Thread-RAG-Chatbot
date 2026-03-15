@@ -1,0 +1,22 @@
+{
+  "doc_id": "b9415330a84d5e4e54029f5797a19666",
+  "message_id": "b9415330a84d5e4e54029f5797a19666",
+  "thread_id": "allen-p:'non-critical', curtailment, 20010426, krg, 621617372",
+  "date": "2001-04-26T11:15:00+00:00",
+  "from": "slc.krsched@williams.com",
+  "to": [
+    "steven.p.south@enron.com"
+  ],
+  "cc": [],
+  "subject": "'Non-Critical', Curtailment, 20010426, KRG, 621617372",
+  "body": "Notice 2001042 is available for your review.\nNotice Type:\u00a0 CURTAILMENT\nNotice Title: UPDATE-KERN RIVER MAINTENANCE 2001\nEffective Date of Notice: 04-26-2001 09:00 AM through 04-29-2001 08:59 AM\nResponse Required? NO\nAttachment Notice.rtf is included.\n- Notice.rtf",
+  "in_reply_to": null,
+  "references": [],
+  "attachments": [
+    {
+      "attachment_id": "b9415330a84d5e4e54029f5797a19666-att-1",
+      "filename": "Notice.rtf",
+      "relative_path": "_attachments/allen-p/b9415330a84d5e4e54029f5797a19666/01_Notice.rtf"
+    }
+  ]
+}
