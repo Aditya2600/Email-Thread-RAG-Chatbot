@@ -1,0 +1,25 @@
+services:
+  api:
+    build: .
+    command: >
+      sh -c "python -m email_thread_rag.scripts.build_dataset_slice &&
+      python -m email_thread_rag.scripts.ingest_corpus --build-slice &&
+      uvicorn email_thread_rag.app.main:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data
+      - ./runs:/app/runs
+  ui:
+    build: .
+    command: python -m email_thread_rag.ui.app
+    environment:
+      - EMAIL_RAG_API_BASE_URL=http://api:8000
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./data:/app/data
+      - ./runs:/app/runs
+    depends_on:
+      - api
+

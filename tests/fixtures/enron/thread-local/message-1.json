@@ -1,0 +1,23 @@
+{
+  "doc_id": "fixture-msg-1",
+  "message_id": "<fixture-msg-1@example.com>",
+  "thread_id": "thread-local",
+  "date": "2024-01-09T12:00:00Z",
+  "from": "fixture.sender@example.com",
+  "to": [
+    "fixture.recipient@example.com"
+  ],
+  "cc": [],
+  "subject": "Fixture Thread",
+  "body": "The attachment has the approved amount.",
+  "attachments": [
+    {
+      "attachment_id": "fixture-msg-1-att-1",
+      "filename": "fixture_attachment.txt",
+      "relative_path": "thread-local/fixture_attachment.txt",
+      "media_type": "text/plain"
+    }
+  ],
+  "references": []
+}
+

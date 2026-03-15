@@ -1,0 +1,30 @@
+{
+  "source": {
+    "name": "enronarchive/enron-mail",
+    "provider": "github_repo",
+    "repo": "enronarchive/enron-mail",
+    "revision": "main",
+    "attachment_base_url": "https://huggingface.co/datasets/enronarchive/mail/resolve/main",
+    "note": "Primary corpus source. The first ingest auto-fetches a deterministic laptop-sized slice from mailbox JSON plus only the selected attachments."
+  },
+  "mailboxes": [
+    {
+      "mailbox": "allen-p",
+      "files": [
+        {
+          "relative_path": "_mailboxes/allen-p/index.json",
+          "repo_path": "mail/allen-p/index.json"
+        }
+      ],
+      "selection": {
+        "date_start": "2000-12-01",
+        "date_end": "2001-05-31",
+        "max_threads": 20,
+        "attachment_thread_count": 12,
+        "max_messages_per_thread": 10,
+        "max_attachment_messages_per_thread": 1,
+        "prefer_attachments": true
+      }
+    }
+  ]
+}

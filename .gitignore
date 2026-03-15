@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Local environment overrides
+.env
+
+# macOS
+.DS_Store
+
+# Local model / tool caches
+.pycache/
+
+# Generated run logs
+runs/
+
+# Generated data and indexes
+data/indexes/
+data/raw/_mailboxes/
+data/raw/_selected/
+data/raw/_attachments/
+data/processed/chunks.jsonl
+data/processed/resolved_dataset_manifest.json
+data/processed/ingest_stats.json
+
+# Keep the pinned manifest and docs
+!data/raw/dataset_manifest.json
+
