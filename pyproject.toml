@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "email-thread-rag"
+version = "0.1.0"
+description = "Inbox-Copilot Level-2 email thread RAG baseline (Stage 0, in-memory backend)."
+requires-python = ">=3.10"
+dependencies = [
+    "beautifulsoup4>=4.12.3",
+    "fastapi>=0.111.0",
+    "httpx>=0.27.0",
+    "lxml>=5.2.2",
+    "numpy>=1.26.4",
+    "pillow>=10.3.0",
+    "pydantic>=2.7.1",
+    "pydantic-settings>=2.2.1",
+    "pymupdf>=1.24.5",
+    "pytesseract>=0.3.10",
+    "python-dateutil>=2.9.0",
+    "python-docx>=1.1.2",
+    "python-dotenv>=1.0.1",
+    "rank-bm25>=0.2.2",
+    "striprtf>=0.0.26",
+    "xlrd>=2.0.1",
+]
+
+# Heavy / future-optional extras. Not needed for Stage-0 tests or the in-memory
+# demo; the model-backed encoder, reranker and rewriter lazy-import these.
+[project.optional-dependencies]
+models = [
+    "faiss-cpu>=1.8.0",
+    "huggingface-hub>=0.23.4",
+    "sentence-transformers>=2.7.0",
+    "torch>=2.3.0",
+    "transformers>=4.41.2",
+]
+serve = [
+    "gradio>=4.36.0",
+    "uvicorn>=0.30.1",
+]
+# Stage-2 ParadeDB/Postgres backend. Only imported when RAG_BACKEND=paradedb;
+# memory-only installs/imports/tests never touch this.
+postgres = [
+    "psycopg[binary]>=3.1.18",
+]
+dev = [
+    "pytest>=8.2.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["email_thread_rag*"]
+exclude = ["src*", "tests*", "data*", "runs*", "infra*", "docs*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: requires a running ParadeDB/Postgres instance (see docker-compose.yml's `db` service)",
+]

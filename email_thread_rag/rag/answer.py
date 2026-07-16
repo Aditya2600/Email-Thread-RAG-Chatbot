@@ -234,7 +234,7 @@ class AnswerBuilder:
         query_tokens = self._content_tokens(query)
         lowered = query.lower()
 
-        def score(hit: RetrievalHit) -> tuple[int, int, float]:
+        def score(index: int, hit: RetrievalHit) -> tuple[int, int, int, float]:
             haystack = " ".join(
                 part
                 for part in (
@@ -259,9 +259,12 @@ class AnswerBuilder:
                 keyword_bonus += 3
             if "territor" in lowered and "service territories" in haystack.lower():
                 keyword_bonus += 3
-            return (overlap + keyword_bonus, -int(hit.chunk.kind == "attachment"), hit.metrics.chunk_support_score)
+            # Position in the incoming (already curated, e.g. recency-sorted by
+            # _preferred_hits_for_query) order beats the noisy continuous rerank
+            # score on ties, so that curation isn't silently discarded by float noise.
+            return (overlap + keyword_bonus, -int(hit.chunk.kind == "attachment"), -index, hit.metrics.chunk_support_score)
 
-        return sorted(hits, key=score, reverse=True)
+        return [hit for _, hit in sorted(enumerate(hits), key=lambda pair: score(*pair), reverse=True)]
 
     def _build_email_metadata_answer(self, query: str, hits: list[RetrievalHit]) -> DraftAnswer | None:
         lowered = query.lower()

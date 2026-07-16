@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import pickle
+import zlib
 from pathlib import Path
 from typing import Protocol
 
@@ -30,7 +31,11 @@ class HashingEncoder:
         vectors = np.zeros((len(texts), self.dim), dtype="float32")
         for row, text in enumerate(texts):
             for token in tokenize(text.lower()):
-                vectors[row, hash(token) % self.dim] += 1.0
+                # Builtin hash() is PYTHONHASHSEED-randomized per process, which
+                # made this fallback embedding space (and any index persisted
+                # across restarts) non-reproducible. crc32 is stable everywhere.
+                bucket = zlib.crc32(token.encode("utf-8")) % self.dim
+                vectors[row, bucket] += 1.0
         return _l2_normalize(vectors)
 
 
@@ -87,7 +92,7 @@ class VectorIndex:
     @classmethod
     def build(cls, chunks: list[ChunkRecord], settings: Settings, encoder: TextEncoder | None = None) -> "VectorIndex":
         effective_encoder = encoder or SentenceTransformerEncoder(settings)
-        embeddings = effective_encoder.encode([chunk.text for chunk in chunks]) if chunks else np.zeros((0, 384), dtype="float32")
+        embeddings = effective_encoder.encode([(chunk.embed_text or chunk.text) for chunk in chunks]) if chunks else np.zeros((0, 384), dtype="float32")
         return cls(chunks, embeddings, effective_encoder)
 
     def save(self, path: Path) -> None:

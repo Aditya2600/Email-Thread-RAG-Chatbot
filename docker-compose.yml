@@ -1,4 +1,27 @@
 services:
+  db:
+    # Stage-2 ParadeDB backend: bundles pg_search + pgvector on Postgres.
+    # Pinned tag (never `latest`) for reproducible migrations/indexes.
+    image: paradedb/paradedb:0.24.1
+    environment:
+      # Local dev credentials only. Never used for production; override
+      # via a real secret manager and a non-default DATABASE_URL there.
+      POSTGRES_USER: ${POSTGRES_USER:-email_rag}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-email_rag_local_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-email_rag}
+    ports:
+      # Host 5433 to avoid clashing with any other local Postgres on 5432.
+      - "5433:5432"
+    volumes:
+      # Postgres 18+ base image (which this ParadeDB tag uses) expects a
+      # single mount at /var/lib/postgresql, not .../data -- see
+      # https://github.com/docker-library/postgres/pull/1259
+      - paradedb_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-email_rag} -d ${POSTGRES_DB:-email_rag}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   api:
     build: .
     command: >
@@ -22,4 +45,7 @@ services:
       - ./runs:/app/runs
     depends_on:
       - api
+
+volumes:
+  paradedb_data:
 

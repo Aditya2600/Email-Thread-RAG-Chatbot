@@ -38,3 +38,8 @@ data/processed/ingest_stats.json
 # Keep the pinned manifest and docs
 !data/raw/dataset_manifest.json
 
+# Packaging / Distribution
+*.egg-info/
+build/
+dist/
+egg-info/

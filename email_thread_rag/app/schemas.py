@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 ChunkKind = Literal["email", "attachment"]
@@ -43,6 +43,12 @@ class EmailRecord(BaseModel):
     references: List[str] = Field(default_factory=list)
     source_path: str
     source_type: SourceType = "manual"
+    # Stage-1 email-native segmentation (additive; None until segmented). Only
+    # ``authored_text`` feeds the normal retrieval path; the rest is for audit.
+    authored_text: Optional[str] = None
+    quoted_text: Optional[str] = None
+    signature_text: Optional[str] = None
+    disclaimer_text: Optional[str] = None
 
 
 class ChunkRecord(BaseModel):
@@ -57,11 +63,24 @@ class ChunkRecord(BaseModel):
     date: datetime
     subject: Optional[str] = None
     text: str
+    # Compact retrieval text (headers + exact authored text) used for BM25/vector
+    # indexing. Defaults to ``text`` for old fixtures/records lacking it, so the
+    # public contract stays backward compatible.
+    embed_text: Optional[str] = None
+    # Optional citation provenance: offsets into the normalized authored body.
+    source_start: Optional[int] = None
+    source_end: Optional[int] = None
     ocr_used: bool = False
     token_count: int
     source_path: str
     source_type: SourceType = "manual"
     metadata: Dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _default_embed_text(self) -> "ChunkRecord":
+        if self.embed_text is None:
+            self.embed_text = self.text
+        return self
 
 
 class RetrievalMetrics(BaseModel):

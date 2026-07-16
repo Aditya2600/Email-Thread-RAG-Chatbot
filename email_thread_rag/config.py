@@ -3,14 +3,15 @@ from __future__ import annotations
 from functools import lru_cache
 import os
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-PROJECT_ROOT = Path(__file__).resolve().parent
+# Repo root is the parent of the email_thread_rag package directory.
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env", override=False)
 
 
@@ -79,6 +80,33 @@ class Settings(BaseSettings):
     ui_host: str = "0.0.0.0"
     ui_port: int = 7860
     api_base_url: str = "http://localhost:8000"
+
+    # Stage-2 ParadeDB/Postgres backend selection. memory stays the default and
+    # needs no database dependency. An explicit paradedb selection must fail
+    # loudly at startup rather than silently falling back to memory. These
+    # read the plain (unprefixed) env var names, same pattern as GEMINI_API_KEY
+    # above, so they match the documented RAG_BACKEND/DATABASE_URL/... names.
+    rag_backend: Literal["memory", "paradedb"] = Field(
+        default_factory=lambda: os.getenv("RAG_BACKEND", "memory")
+    )
+    database_url: Optional[str] = Field(default_factory=lambda: os.getenv("DATABASE_URL"))
+    # Stage-2.5: every ParadeDB write/query is scoped by these. A single
+    # RAGEngine instance serves one tenant/mailbox; there is no unscoped
+    # production retrieval method.
+    tenant_id: str = Field(default_factory=lambda: os.getenv("TENANT_ID", "default"))
+    mailbox_id: str = Field(default_factory=lambda: os.getenv("MAILBOX_ID", "default"))
+    # Must match the vector column dimension in the migration and the encoder
+    # actually used (HashingEncoder/MiniLM-L6-v2 both emit 384-dim vectors).
+    # Changing this requires a migration + re-embedding backfill, not a config
+    # edit against mixed-dimension rows.
+    embedding_model_id: str = Field(
+        default_factory=lambda: os.getenv("EMBEDDING_MODEL_ID", "sentence-transformers/all-MiniLM-L6-v2")
+    )
+    embedding_dim: int = Field(default_factory=lambda: int(os.getenv("EMBEDDING_DIM", "384")))
+    hybrid_lexical_weight: float = Field(default_factory=lambda: float(os.getenv("HYBRID_LEXICAL_WEIGHT", "1.0")))
+    hybrid_dense_weight: float = Field(default_factory=lambda: float(os.getenv("HYBRID_DENSE_WEIGHT", "1.0")))
+    hybrid_rrf_k: int = Field(default_factory=lambda: int(os.getenv("HYBRID_RRF_K", "60")))
+    hybrid_candidate_limit: int = Field(default_factory=lambda: int(os.getenv("HYBRID_CANDIDATE_LIMIT", "40")))
 
     def ensure_directories(self) -> None:
         for path in (

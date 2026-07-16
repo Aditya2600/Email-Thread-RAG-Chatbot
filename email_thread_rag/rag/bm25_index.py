@@ -22,7 +22,7 @@ def _normalize_scores(values: list[float]) -> list[float]:
 class BM25Index:
     def __init__(self, chunks: list[ChunkRecord]):
         self.chunks = chunks
-        self.corpus_tokens = [tokenize(chunk.text.lower()) for chunk in chunks]
+        self.corpus_tokens = [tokenize((chunk.embed_text or chunk.text).lower()) for chunk in chunks]
         self.bm25 = BM25Okapi(self.corpus_tokens) if self.corpus_tokens else None
 
     def save(self, path: Path) -> None:

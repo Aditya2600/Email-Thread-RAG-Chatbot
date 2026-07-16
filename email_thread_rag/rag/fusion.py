@@ -38,3 +38,40 @@ def reciprocal_rank_fusion(
         hit.source_lists = sorted(set(hit.source_lists))
     return fused
 
+
+def weighted_rrf(
+    lexical_ranked_ids: list[str],
+    dense_ranked_ids: list[str],
+    *,
+    k: int = 60,
+    lexical_weight: float = 1.0,
+    dense_weight: float = 1.0,
+) -> list[tuple[str, float, int | None, int | None]]:
+    """Stage-2 ParadeDB fusion: weighted RRF over two ranked chunk_id lists.
+
+    fused_score = lexical_weight / (k + lexical_rank) + dense_weight / (k + dense_rank)
+
+    Ranks start at 1. A chunk_id present in both lists gets both terms; one
+    present in only one list is still eligible with just that term. Returned
+    as (chunk_id, fused_score, lexical_rank, dense_rank), sorted by fused_score
+    descending with a deterministic chunk_id-ascending tie-break. Pure and
+    DB-agnostic so the exact math is unit-testable without Postgres.
+    """
+    lexical_rank_by_id = {chunk_id: rank for rank, chunk_id in enumerate(lexical_ranked_ids, start=1)}
+    dense_rank_by_id = {chunk_id: rank for rank, chunk_id in enumerate(dense_ranked_ids, start=1)}
+    all_ids = set(lexical_rank_by_id) | set(dense_rank_by_id)
+
+    fused: list[tuple[str, float, int | None, int | None]] = []
+    for chunk_id in all_ids:
+        lexical_rank = lexical_rank_by_id.get(chunk_id)
+        dense_rank = dense_rank_by_id.get(chunk_id)
+        score = 0.0
+        if lexical_rank is not None:
+            score += lexical_weight / (k + lexical_rank)
+        if dense_rank is not None:
+            score += dense_weight / (k + dense_rank)
+        fused.append((chunk_id, score, lexical_rank, dense_rank))
+
+    fused.sort(key=lambda item: (-item[1], item[0]))
+    return fused
+

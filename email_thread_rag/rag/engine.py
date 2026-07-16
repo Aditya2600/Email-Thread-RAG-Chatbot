@@ -12,9 +12,10 @@ from email_thread_rag.app.schemas import AskResponse, ClauseValidation, MetricsR
 from email_thread_rag.app.sessions import SessionStore
 from email_thread_rag.config import Settings, get_settings
 from email_thread_rag.rag.answer import AnswerBuilder, DraftAnswer
+from email_thread_rag.rag.backend import build_retriever
 from email_thread_rag.rag.citation_validator import CitationValidator, ValidationResult
 from email_thread_rag.rag.memory import MemoryManager
-from email_thread_rag.rag.retrieval import HybridRetriever, RetrievalResult
+from email_thread_rag.rag.retrieval import RetrievalResult
 from email_thread_rag.rag.rewrite import QueryRewriter
 from email_thread_rag.rag.utils import append_jsonl
 
@@ -31,7 +32,10 @@ class RAGEngine:
         settings: Settings | None = None,
         *,
         session_store: SessionStore | None = None,
-        retriever: HybridRetriever | None = None,
+        # Duck-typed: the in-memory HybridRetriever (rag.retrieval) or the
+        # ParadeDB-backed ParadeDBEngineRetriever (rag.paradedb.retrieval) --
+        # both expose .available_threads() and .search(query, *, thread_id=None).
+        retriever=None,
         memory_manager: MemoryManager | None = None,
         rewriter: QueryRewriter | None = None,
         answer_builder: AnswerBuilder | None = None,
@@ -39,7 +43,7 @@ class RAGEngine:
     ):
         self.settings = settings or get_settings()
         self.session_store = session_store or SessionStore(self.settings)
-        self.retriever = retriever or HybridRetriever.from_chunk_store(self.settings)
+        self.retriever = retriever or build_retriever(self.settings)
         self.memory_manager = memory_manager or MemoryManager()
         self.rewriter = rewriter or QueryRewriter(self.settings)
         self.answer_builder = answer_builder or AnswerBuilder()
