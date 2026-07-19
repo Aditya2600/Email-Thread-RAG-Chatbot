@@ -70,7 +70,8 @@ def client(store, cipher, gmail_client):
             token_exchanger=lambda form: {"refresh_token": REFRESH_TOKEN, "scope": GMAIL_READONLY_SCOPE},
         )
     )
-    return TestClient(app)
+    # follow_redirects=False: the callback's redirect target is the assertion.
+    return TestClient(app, follow_redirects=False)
 
 
 # --- OAuth routes ---------------------------------------------------------
@@ -83,19 +84,26 @@ def test_start_returns_a_consent_url(client):
     assert "code_challenge_method=S256" in url
 
 
-def test_callback_connects_the_mailbox_without_exposing_a_token(client, store, cipher):
+@pytest.mark.parametrize("params", [{"mailbox_id": "inbox"}, {"tenant_id": "acme"}, {}])
+def test_start_requires_both_identifiers(client, params):
+    assert client.get("/gmail/oauth/start", params=params).status_code == 422
+
+
+def test_callback_redirects_to_the_frontend_without_exposing_a_token(client, store, cipher):
     start = client.get("/gmail/oauth/start", params={"tenant_id": "acme", "mailbox_id": "inbox"})
     state = start.json()["authorization_url"].split("state=")[1].split("&")[0]
 
     response = client.get("/gmail/oauth/callback", params={"code": "4/auth-code", "state": state})
-    assert response.status_code == 200
+    assert response.status_code == 303
 
-    body = response.json()
-    assert body["email_address"] == "user@example.com"
-    assert body["status"] == "active"
-    # The response body must never carry the credential.
-    assert REFRESH_TOKEN not in response.text
-    assert "refresh_token" not in body
+    location = response.headers["location"]
+    assert location.startswith("http://localhost:5173/settings?")
+    assert "gmail=connected" in location
+    assert "user%40example.com" in location
+    # Neither the credential nor the code/state may ride along in the redirect.
+    for secret in (REFRESH_TOKEN, "refresh_token", "4/auth-code", state):
+        assert secret not in location
+        assert secret not in response.text
 
     stored = store.get_mailbox("acme", "inbox")
     assert cipher.decrypt(stored.refresh_token_ciphertext) == REFRESH_TOKEN
@@ -106,7 +114,7 @@ def test_callback_rejects_a_replayed_state(client):
     start = client.get("/gmail/oauth/start", params={"tenant_id": "acme", "mailbox_id": "inbox"})
     state = start.json()["authorization_url"].split("state=")[1].split("&")[0]
 
-    assert client.get("/gmail/oauth/callback", params={"code": "4/c", "state": state}).status_code == 200
+    assert client.get("/gmail/oauth/callback", params={"code": "4/c", "state": state}).status_code == 303
     replay = client.get("/gmail/oauth/callback", params={"code": "4/c", "state": state})
     assert replay.status_code == 400
     assert "4/c" not in replay.text  # the code never echoes back

@@ -18,7 +18,7 @@ from email_thread_rag.rag.vector_index import HashingEncoder
 
 pytestmark = pytest.mark.integration
 
-ENCODER = HashingEncoder(dim=384)
+ENCODER = HashingEncoder(dim=768)
 
 
 def _email(message_id: str, thread_id: str, authored_text: str) -> EmailRecord:
@@ -54,7 +54,7 @@ def _chunk(chunk_id: str, message_id: str, thread_id: str, text: str, embed_text
 
 
 def _repo(conn) -> ParadeDBRepository:
-    return ParadeDBRepository(conn, embedding_dim=384)
+    return ParadeDBRepository(conn, embedding_dim=768)
 
 
 @pytest.fixture
@@ -213,7 +213,7 @@ def test_bm25_exact_number_match(db_conn, smoke_corpus):
 
 # 7. Vector retrieval returns the nearest deterministic fixture vector.
 def test_dense_retrieval_returns_nearest_fixture_vector(db_conn, smoke_corpus):
-    dense = DenseRetriever(db_conn, embedding_dim=384)
+    dense = DenseRetriever(db_conn, embedding_dim=768)
     hits = dense.search(smoke_corpus["query_embedding"], smoke_corpus["acme"], limit=5)
     assert hits, "expected at least one embedded row"
     assert hits[0].chunk_id == "chunk-b"
@@ -247,7 +247,7 @@ def test_cross_tenant_isolation(db_conn, smoke_corpus):
     hits = lexical.search("Project Atlas final sign-off", smoke_corpus["acme"], limit=10)
     assert not any(hit.chunk_id == "chunk-c" for hit in hits), "other tenant's chunk leaked into acme results"
 
-    dense = DenseRetriever(db_conn, embedding_dim=384)
+    dense = DenseRetriever(db_conn, embedding_dim=768)
     dense_hits = dense.search(smoke_corpus["query_embedding"], smoke_corpus["acme"], limit=10)
     assert not any(hit.chunk_id == "chunk-c" for hit in dense_hits)
 
@@ -258,7 +258,7 @@ def test_null_embedding_chunk_lexical_searchable_dense_excluded(db_conn, smoke_c
     lexical_hits = lexical.search("BUD-2026-0099", smoke_corpus["acme"], limit=5)
     assert any(hit.chunk_id == "chunk-d" for hit in lexical_hits)
 
-    dense = DenseRetriever(db_conn, embedding_dim=384)
+    dense = DenseRetriever(db_conn, embedding_dim=768)
     dense_hits = dense.search(smoke_corpus["query_embedding"], smoke_corpus["acme"], limit=10)
     assert not any(hit.chunk_id == "chunk-d" for hit in dense_hits)
 
@@ -303,7 +303,7 @@ def test_offline_smoke_corpus_end_to_end(db_conn, smoke_corpus, capsys):
     filters = smoke_corpus["acme"]
     query = "Project Atlas budget authorization"
     lexical = LexicalRetriever(db_conn)
-    dense = DenseRetriever(db_conn, embedding_dim=384)
+    dense = DenseRetriever(db_conn, embedding_dim=768)
 
     lexical_hits = lexical.search(query, filters, limit=10)
     dense_hits = dense.search(smoke_corpus["query_embedding"], filters, limit=10)

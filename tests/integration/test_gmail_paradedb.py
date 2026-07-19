@@ -37,7 +37,7 @@ from gmail_store_contract import SyncStoreContract, connect_mailbox, notify
 
 pytestmark = pytest.mark.integration
 
-ENCODER = HashingEncoder(dim=384)
+ENCODER = HashingEncoder(dim=768)
 SUBSCRIPTION = "projects/demo/subscriptions/gmail-push"
 AUTH = {"Authorization": "Bearer fake-oidc-token"}
 ADDRESS = "user@example.com"
@@ -119,7 +119,7 @@ def test_large_history_ids_round_trip_exactly(store):
 
 # --- End-to-end smoke ------------------------------------------------------
 def settings_for(tenant="acme", mailbox_id="inbox") -> Settings:
-    return Settings(rag_backend="paradedb", tenant_id=tenant, mailbox_id=mailbox_id, embedding_dim=384)
+    return Settings(rag_backend="paradedb", tenant_id=tenant, mailbox_id=mailbox_id, embedding_dim=768)
 
 
 def gmail_message(gmail_id, *, body, thread="t-1", subject="Budget Review"):

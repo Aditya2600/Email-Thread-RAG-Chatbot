@@ -70,7 +70,7 @@ def _row_to_state(row) -> Optional[ChunkContextState]:
 
 
 class PostgresContextJobStore:
-    def __init__(self, conn, *, embedding_dim: int = 384):
+    def __init__(self, conn, *, embedding_dim: int = 768):
         self.conn = conn
         self.embedding_dim = embedding_dim
 
@@ -249,5 +249,5 @@ class PostgresContextJobStore:
         return [_row_to_state(row) for row in rows]
 
 
-def build_store(conn, *, embedding_dim: int = 384) -> PostgresContextJobStore:
+def build_store(conn, *, embedding_dim: int = 768) -> PostgresContextJobStore:
     return PostgresContextJobStore(conn, embedding_dim=embedding_dim)

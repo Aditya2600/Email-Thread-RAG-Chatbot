@@ -39,7 +39,7 @@ python -c "from email_thread_rag.rag.engine import RAGEngine"
 Run the API over the already-ingested local corpus (no rebuild, no network):
 
 ```bash
-python -m pip install -e '.[serve]'                       # adds uvicorn + gradio
+python -m pip install -e '.[serve]'                       # adds uvicorn
 python -m email_thread_rag.scripts.run_demo --skip-build  # serves data/processed
 ```
 
@@ -47,7 +47,7 @@ Optional extras:
 - `.[models]` — `torch`, `sentence-transformers`, `faiss-cpu`,
   `huggingface-hub`. Only needed for the model-backed encoder/reranker;
   the baseline lazily falls back to the in-memory path without them.
-- `.[serve]` — `uvicorn`, `gradio` for the HTTP API and UI.
+- `.[serve]` — `uvicorn` for the HTTP API.
 
 **Deferred to Stage 1+ (not implemented):** ParadeDB/Postgres, `pgvector`/`pg_search`,
 Gmail OAuth + `users.watch` sync, Medha / LLM generation, HyDE, Self-RAG, GraphRAG /
@@ -103,7 +103,7 @@ uvicorn email_thread_rag.app.main:app --reload
 Run the UI:
 
 ```bash
-python -m email_thread_rag.ui.app
+cd frontend && npm install && npm run dev
 ```
 
 Run everything with Docker:
@@ -132,7 +132,7 @@ Example `.env`:
 
 ```dotenv
 EMAIL_RAG_DATASET_MANIFEST_PATH=/absolute/path/to/email_thread_rag/data/raw/dataset_manifest.json
-EMAIL_RAG_EMBEDDING_MODEL_NAME=sentence-transformers/all-MiniLM-L6-v2
+EMAIL_RAG_EMBEDDING_MODEL_NAME=Alibaba-NLP/gte-modernbert-base
 EMAIL_RAG_RERANKER_MODEL_NAME=cross-encoder/ms-marco-MiniLM-L-6-v2
 EMAIL_RAG_ENABLE_CLOUD_REWRITE=false
 EMAIL_RAG_CLOUD_REWRITE_PROVIDER=gemini
@@ -181,9 +181,9 @@ The ingest script auto-builds the slice if no resolved manifest exists yet.
 - **Why RRF combines ranks, not raw scores.** A BM25 score and a cosine distance live on unrelated scales, so adding them directly is meaningless. Reciprocal Rank Fusion converts each branch to a rank, then combines `weight / (k + rank)` per branch — comparable regardless of how either branch's raw scores are distributed. See `weighted_rrf()` in `rag/fusion.py`, unit-tested against the literal formula in `tests/test_rrf_fusion.py`.
 - **`embed_text` searched, `text` cited.** Both the BM25 index and the embedding are built from `embed_text` (headers + authored body), so a query like "Q3 Budget" can match on injected metadata. The row's `text` column — pure authored evidence — is always what's returned as citation evidence; the header block never reaches the reader.
 - **Versions.** ParadeDB `paradedb/paradedb:0.24.1` (pinned, not `latest`), bundling `pg_search 0.24.1` and `pgvector 0.8.2` on Postgres 18.4. Bring up: `docker compose -f infra/docker-compose.yml up -d db`, then `python -m email_thread_rag.scripts.apply_paradedb_migrations`.
-- **Schema.** `email_messages` (one row per email, `UNIQUE (tenant_id, mailbox_id, message_id)`) and `email_chunks` (one row per chunk, `UNIQUE (tenant_id, mailbox_id, chunk_id)`, FK to `email_messages`, `vector(384)` embedding column, BM25 index over `embed_text` + metadata columns, HNSW cosine index over `embedding`). See `rag/paradedb/migrations/0001_init.sql`. Re-ingesting a message upserts it, upserts its current chunks, and deletes chunks the chunker no longer produces — all in one transaction (`ParadeDBRepository.reprocess_message`).
+- **Schema.** `email_messages` (one row per email, `UNIQUE (tenant_id, mailbox_id, message_id)`) and `email_chunks` (one row per chunk, `UNIQUE (tenant_id, mailbox_id, chunk_id)`, FK to `email_messages`, `vector(768)` embedding column, BM25 index over `embed_text` + metadata columns, HNSW cosine index over `embedding`). See `rag/paradedb/migrations/0001_init.sql` (widened to 768 by `0006_embedding_dim_768.sql`; embeddings cleared for the GTE swap by `0007_reembed_gte_modernbert.sql`). Re-ingesting a message upserts it, upserts its current chunks, and deletes chunks the chunker no longer produces — all in one transaction (`ParadeDBRepository.reprocess_message`).
 - **memory vs paradedb.** `RAG_BACKEND=memory` (default) needs no database and is what the whole test suite runs against by default. `RAG_BACKEND=paradedb` requires `DATABASE_URL`; an explicit paradedb selection with a missing/unreachable database or missing extensions raises `ParadeDBConfigError` immediately rather than silently continuing on the memory backend.
-- **Embedding dimension policy.** Pinned at 384 (`EMBEDDING_DIM`), matching both `sentence-transformers/all-MiniLM-L6-v2` and the deterministic `HashingEncoder` fallback. Changing it requires a new migration plus a full re-embedding backfill — never point a different-dimension encoder at existing rows.
+- **Embedding dimension policy.** Pinned at 768 (`EMBEDDING_DIM`), matching both `Alibaba-NLP/gte-modernbert-base` and the deterministic `HashingEncoder` fallback. Changing it requires a new migration plus a full re-embedding backfill — never point a different-dimension encoder at existing rows. Changing the *model* at a fixed dimension needs the same full re-embed: equal width is not a compatible vector space, and mixing two models' embeddings in one column yields cosine scores that look valid and mean nothing. See `0007_reembed_gte_modernbert.sql`.
 - **Tenant/mailbox filtering.** Every repository write and every `LexicalRetriever`/`DenseRetriever`/`HybridRetriever` query requires an explicit `tenant_id` + `mailbox_id` (`RetrievalFilters`); there is no unscoped search method. Enforced in every SQL `WHERE` clause rather than Postgres RLS in this stage — see "deferred" below.
 - **Running the tests.** `python -m pytest -q -m "not integration"` runs the full suite with no database. `docker compose -f infra/docker-compose.yml up -d db && python -m email_thread_rag.scripts.apply_paradedb_migrations && python -m pytest -m integration -q` runs the real ParadeDB integration suite (`tests/integration/`) against the pinned container; it creates and drops its own throwaway database per session so it never touches your working data.
 - **Deferred.** Postgres row-level security (isolation is enforced in repository/query code instead). LLM contextual prefixes (`context_prefix`/`context_method`/`context_version` columns exist as extension points, unused). Gmail sync, GraphRAG, OCR, HyDE, Self-RAG, reranking models, agentic query planning. (`RAGEngine` wiring to ParadeDB is now Stage 2.5, below.)

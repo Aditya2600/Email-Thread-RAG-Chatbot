@@ -114,15 +114,6 @@ export function SourceDrawer({
                   </p>
                 </div>
               )}
-
-              <div>
-                <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-ink-muted">
-                  Message ID
-                </div>
-                <p className="break-all rounded-lg border border-border bg-surface-raised px-4 py-3 font-mono text-xs text-ink-muted">
-                  {citation.messageId}
-                </p>
-              </div>
             </div>
           </div>
         )}

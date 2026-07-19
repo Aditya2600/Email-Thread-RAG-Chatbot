@@ -1,15 +1,18 @@
 """OAuth connect/callback routes.
 
-API only -- no UI is part of this stage. Responses never contain a token, an
-authorization code, or a raw credential: the callback returns the connected
-address and status, nothing more.
+``/start`` is a JSON API the frontend calls before navigating; ``/callback`` is
+reached by browser navigation from Google and therefore redirects back to the
+frontend. Neither response contains a token, an authorization code, or a raw
+credential -- the callback carries only the connected address.
 """
 
 from __future__ import annotations
 
 import logging
+from urllib.parse import urlencode
 
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import RedirectResponse
 
 from email_thread_rag.gmail.oauth import OAuthError, exchange_code, start_authorization
 
@@ -56,7 +59,7 @@ def build_oauth_router(
         return {"authorization_url": request.url}
 
     @router.get("/callback")
-    def callback(code: str = Query(...), state: str = Query(...)) -> dict:
+    def callback(code: str = Query(...), state: str = Query(...)) -> RedirectResponse:
         _require_config()
         from email_thread_rag.gmail.service import connect_mailbox
 
@@ -84,13 +87,12 @@ def build_oauth_router(
             refresh_token=refresh_token,
             topic_name=settings.gmail_pubsub_topic,
         )
-        # Deliberately narrow: address + status + watch expiry, never a token.
-        return {
-            "tenant_id": mailbox.tenant_id,
-            "mailbox_id": mailbox.mailbox_id,
-            "email_address": mailbox.email_address,
-            "status": mailbox.status,
-            "watch_expiration": mailbox.watch_expiration.isoformat() if mailbox.watch_expiration else None,
-        }
+        # The browser navigated here from Google, so it has to land on a page.
+        # Deliberately narrow query: the connected address, never a token, never
+        # the code, never the state.
+        query = urlencode({"gmail": "connected", "email": mailbox.email_address or ""})
+        return RedirectResponse(
+            f"{settings.frontend_base_url.rstrip('/')}/settings?{query}", status_code=303
+        )
 
     return router

@@ -14,22 +14,12 @@ export function CitationCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const isAttachment = citation.type === "attachment";
-  // Only metadata the backend actually returned is rendered.
-  const meta = [
-    citation.date ? formatDate(citation.date) : null,
-    citation.threadLabel ?? null,
-  ].filter((v): v is string => Boolean(v));
 
+  // Entrance is driven by whatever renders the list, so the cards can stagger.
   return (
-    <motion.article
-      layout
-      initial={{ opacity: 0, y: 4 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.2 }}
-      className="glass-card rounded-xl p-4 lift-on-hover"
-    >
+    <motion.article layout className="glass-card rounded-xl p-4 lift-on-hover">
       <div className="flex items-start gap-3">
-        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-gradient-brand text-[11px] font-semibold text-white">
+        <div className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand text-[11px] font-semibold text-white">
           {citation.index}
         </div>
         <div className="min-w-0 flex-1">
@@ -40,12 +30,12 @@ export function CitationCard({
                 {citation.sender ?? (isAttachment ? "Attachment" : "Email message")}
               </span>
             </span>
-            {meta.map((m) => (
-              <span key={m} className="flex min-w-0 items-center gap-1.5">
+            {citation.date && (
+              <>
                 <span>·</span>
-                <span className="truncate">{m}</span>
-              </span>
-            ))}
+                <span>{formatDate(citation.date)}</span>
+              </>
+            )}
           </div>
           {citation.subject && (
             <h3 className="mt-0.5 truncate text-sm font-medium text-ink">{citation.subject}</h3>

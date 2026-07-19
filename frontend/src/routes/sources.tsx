@@ -70,7 +70,7 @@ function SourcesPage() {
               {filtered.map((thread) => (
                 <div key={thread} className="glass-card rounded-xl p-4 lift-on-hover">
                   <div className="flex items-center gap-3">
-                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-gradient-brand text-white">
+                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-brand text-white">
                       <MessagesSquare className="h-4 w-4" />
                     </div>
                     <span className="min-w-0 flex-1 truncate font-mono text-sm text-ink">

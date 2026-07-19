@@ -2,10 +2,11 @@
 -- Idempotent by construction (IF NOT EXISTS everywhere) so re-running this
 -- file against an already-migrated database is a safe no-op.
 --
--- Embedding dimension is pinned at 384 (sentence-transformers/all-MiniLM-L6-v2
--- and the deterministic HashingEncoder fallback both emit 384-dim vectors).
--- Changing this requires a new migration + backfill; do not point a different
--- dimension encoder at this column without one.
+-- Embedding dimension was pinned at 384 here. It is now 768 -- see
+-- 0006_embedding_dim_768.sql, which widens this column for
+-- BAAI/bge-base-en-v1.5. This file is left as applied history; the current
+-- dimension is EMBEDDING_DIM in config.py. Changing it requires a new
+-- migration + full re-embed, never a config edit against existing rows.
 
 CREATE EXTENSION IF NOT EXISTS pg_search;
 CREATE EXTENSION IF NOT EXISTS vector;

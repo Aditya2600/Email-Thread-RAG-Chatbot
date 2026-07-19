@@ -269,10 +269,6 @@ function getSession(): Promise<string> {
 
 // --- Public API --------------------------------------------------------------
 
-export function getHealth(): Promise<{ status: string }> {
-  return request<{ status: string }>("/health", {}, 5_000);
-}
-
 /** Thread IDs the backend has indexed. This is the only inventory route it has:
  *  there is no endpoint that lists individual messages or attachments. */
 export async function listThreads(): Promise<string[]> {

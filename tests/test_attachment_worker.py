@@ -42,7 +42,7 @@ class FakeConn:
 class FakeRepository:
     def __init__(self, parent_row=PARENT):
         self.conn = FakeConn(parent_row)
-        self.embedding_dim = 384
+        self.embedding_dim = 768
         self.replaced: list = []
 
     def replace_attachment_chunks(self, message_id, attachment_id, embedded, *, tenant_id, mailbox_id):
@@ -92,7 +92,7 @@ def _setup(pdf_bytes, *, ocr_backend=None, settings=None, meta_size=None, parent
         tenant_id="acme", mailbox_id="inbox",
     )
     worker = AttachmentExtractionWorker(
-        store, client, repo, encoder=HashingEncoder(dim=384), settings=settings, ocr_backend=ocr_backend,
+        store, client, repo, encoder=HashingEncoder(dim=768), settings=settings, ocr_backend=ocr_backend,
     )
     return worker, store, client, repo
 

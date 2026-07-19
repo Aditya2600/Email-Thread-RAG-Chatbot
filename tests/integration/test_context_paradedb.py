@@ -37,7 +37,7 @@ from datetime import datetime, timezone
 
 pytestmark = pytest.mark.integration
 
-ENCODER = HashingEncoder(dim=384)
+ENCODER = HashingEncoder(dim=768)
 TENANT = "acme"
 MAILBOX = "inbox"
 # A term that appears in NO authored text, so retrieving by it proves the hit
@@ -65,7 +65,7 @@ def context_settings(**overrides) -> Settings:
         context_enabled=True,
         context_base_url="http://fake.invalid/v1",
         context_model="fake-context-model",
-        embedding_dim=384,
+        embedding_dim=768,
     )
     kwargs.update(overrides)
     return Settings(**kwargs)
@@ -104,7 +104,7 @@ def persist(conn, email: EmailRecord, *, settings=None, tenant_id=TENANT, mailbo
         tenant_id=tenant_id,
         mailbox_id=mailbox_id,
         encoder=ENCODER,
-        embedding_dim=384,
+        embedding_dim=768,
         settings=settings,
     )
 
@@ -121,7 +121,7 @@ def read_chunk(conn, chunk_id, *, tenant_id=TENANT):
 class TestPostgresContextJobStore(ContextStoreContract):
     @pytest.fixture
     def store(self, autocommit_conn):
-        return PostgresContextJobStore(autocommit_conn, embedding_dim=384)
+        return PostgresContextJobStore(autocommit_conn, embedding_dim=768)
 
     @pytest.fixture
     def make_chunk(self, autocommit_conn):
@@ -331,7 +331,7 @@ def test_smoke_persisted_chunk_to_prefix_to_retrieval_to_clean_citation(autocomm
     # 2. A fake LLM produces a prefix carrying a term found nowhere in the mail.
     prefix = f"This chunk concerns the {UNIQUE_PREFIX_TERM} procurement budget for Acme Supplies."
     provider = FakeContextProvider(responder=lambda ci: context_json(prefix), model_id="fake-context-model")
-    store = PostgresContextJobStore(autocommit_conn, embedding_dim=384)
+    store = PostgresContextJobStore(autocommit_conn, embedding_dim=768)
     worker = ContextWorker(store, provider, encoder=ENCODER, prompt_version=PROMPT_VERSION)
 
     assert worker.run_once() is True
@@ -383,7 +383,7 @@ def test_a_chunk_stays_retrievable_by_its_own_words_after_contextualization(auto
         model_id="fake-context-model",
     )
     ContextWorker(
-        PostgresContextJobStore(autocommit_conn, embedding_dim=384),
+        PostgresContextJobStore(autocommit_conn, embedding_dim=768),
         provider,
         encoder=ENCODER,
         prompt_version=PROMPT_VERSION,
@@ -403,7 +403,7 @@ def test_a_fallback_chunk_is_still_retrievable(autocommit_conn):
     # Malformed output every time.
     provider = FakeContextProvider(responder=lambda ci: "}} not json {{", model_id="fake-context-model")
     ContextWorker(
-        PostgresContextJobStore(autocommit_conn, embedding_dim=384),
+        PostgresContextJobStore(autocommit_conn, embedding_dim=768),
         provider,
         encoder=ENCODER,
         prompt_version=PROMPT_VERSION,
@@ -426,7 +426,7 @@ def test_a_fallback_chunk_is_still_retrievable(autocommit_conn):
 def test_a_re_ingest_during_the_llm_call_defeats_the_stale_job(autocommit_conn):
     settings = context_settings()
     persist(autocommit_conn, make_email(), settings=settings)
-    store = PostgresContextJobStore(autocommit_conn, embedding_dim=384)
+    store = PostgresContextJobStore(autocommit_conn, embedding_dim=768)
 
     def responder(context_input):
         # The message is re-ingested with new text while the model "thinks".
@@ -512,7 +512,7 @@ def test_backfill_skips_already_contextualized_chunks(autocommit_conn):
         responder=lambda ci: context_json("Concerns the budget."), model_id="fake-context-model"
     )
     ContextWorker(
-        PostgresContextJobStore(autocommit_conn, embedding_dim=384),
+        PostgresContextJobStore(autocommit_conn, embedding_dim=768),
         provider,
         encoder=ENCODER,
         prompt_version=PROMPT_VERSION,
@@ -549,7 +549,7 @@ def test_one_tenants_prefix_never_surfaces_for_another(autocommit_conn):
     autocommit_conn.execute("DELETE FROM chunk_context_jobs WHERE tenant_id <> 'acme'")
     prefix = f"This chunk concerns the {UNIQUE_PREFIX_TERM} programme."
     ContextWorker(
-        PostgresContextJobStore(autocommit_conn, embedding_dim=384),
+        PostgresContextJobStore(autocommit_conn, embedding_dim=768),
         FakeContextProvider(responder=lambda ci: context_json(prefix), model_id="fake-context-model"),
         encoder=ENCODER,
         prompt_version=PROMPT_VERSION,
@@ -584,7 +584,7 @@ def test_a_worker_only_writes_the_tenant_its_job_names(autocommit_conn):
     persist(autocommit_conn, make_email(), settings=settings, tenant_id="globex")
 
     ContextWorker(
-        PostgresContextJobStore(autocommit_conn, embedding_dim=384),
+        PostgresContextJobStore(autocommit_conn, embedding_dim=768),
         FakeContextProvider(
             responder=lambda ci: context_json("Concerns the budget."), model_id="fake-context-model"
         ),
@@ -611,7 +611,7 @@ def test_gmail_ingestion_enqueues_context_without_calling_the_provider(autocommi
         tenant_id=TENANT,
         mailbox_id=MAILBOX,
         encoder=ENCODER,
-        embedding_dim=384,
+        embedding_dim=768,
         settings=settings,
     )
     email = make_email()
@@ -636,7 +636,7 @@ def test_the_gmail_sink_queues_nothing_when_contextualization_is_off(autocommit_
     from email_thread_rag.gmail.sink import ParadeDBChunkSink
 
     sink = ParadeDBChunkSink(
-        autocommit_conn, tenant_id=TENANT, mailbox_id=MAILBOX, encoder=ENCODER, embedding_dim=384
+        autocommit_conn, tenant_id=TENANT, mailbox_id=MAILBOX, encoder=ENCODER, embedding_dim=768
     )
     sink.persist(make_email())
 
@@ -651,7 +651,7 @@ def test_deleting_a_gmail_message_removes_its_context_jobs(autocommit_conn):
         tenant_id=TENANT,
         mailbox_id=MAILBOX,
         encoder=ENCODER,
-        embedding_dim=384,
+        embedding_dim=768,
         settings=context_settings(),
     )
     email = make_email()

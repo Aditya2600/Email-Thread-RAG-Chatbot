@@ -22,6 +22,7 @@ from email_thread_rag.config import Settings
 from email_thread_rag.rag.fusion import weighted_rrf, weighted_rrf_multi
 from email_thread_rag.rag.paradedb.repository import vector_literal
 from email_thread_rag.rag.planner import plan_query
+from email_thread_rag.rag.vector_index import encode_query
 
 
 @dataclass
@@ -117,7 +118,7 @@ class LexicalRetriever:
 class DenseRetriever:
     """pgvector cosine retrieval. Ignores rows with a NULL embedding."""
 
-    def __init__(self, conn: psycopg.Connection, *, embedding_dim: int = 384, use_iterative_scan: bool = True):
+    def __init__(self, conn: psycopg.Connection, *, embedding_dim: int = 768, use_iterative_scan: bool = True):
         self.conn = conn
         self.embedding_dim = embedding_dim
         self.use_iterative_scan = use_iterative_scan
@@ -182,7 +183,7 @@ class HybridRetriever:
         candidate_limit = max(self.settings.hybrid_candidate_limit, top_k * 4)
         lexical_hits = self.lexical.search(query, filters, candidate_limit)
         # Query embedding computed once and reused for the dense branch only.
-        query_embedding = self.encoder.encode([query])[0]
+        query_embedding = encode_query(self.encoder, query)
         dense_hits = self.dense.search(query_embedding, filters, candidate_limit)
 
         lexical_by_id = {hit.chunk_id: hit for hit in lexical_hits}
@@ -336,7 +337,7 @@ class ParadeDBEngineRetriever:
         candidate_limit = max(self.settings.hybrid_candidate_limit, self.settings.fused_top_k * 4)
 
         lexical_hits = self.lexical.search(query, filters, candidate_limit)
-        query_embedding = self.encoder.encode([query])[0]
+        query_embedding = encode_query(self.encoder, query)
         dense_hits = self.dense.search(query_embedding, filters, candidate_limit)
 
         lexical_by_id = {hit.chunk_id: hit for hit in lexical_hits}

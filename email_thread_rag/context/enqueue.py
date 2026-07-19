@@ -35,7 +35,7 @@ def enqueue_message_context(
     tenant_id: str,
     mailbox_id: str,
     settings,
-    embedding_dim: int = 384,
+    embedding_dim: int = 768,
 ) -> int:
     """Queue contextualization for one persisted message's chunks.
 

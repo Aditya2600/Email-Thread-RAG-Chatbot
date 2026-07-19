@@ -30,7 +30,7 @@ def backfill_context_jobs(
     settings,
     batch_size: int = 100,
     max_chunks: int | None = None,
-    embedding_dim: int = 384,
+    embedding_dim: int = 768,
 ) -> int:
     """Queue every not-yet-contextualized chunk. Returns jobs created."""
     from email_thread_rag.context.repository import PostgresContextJobStore

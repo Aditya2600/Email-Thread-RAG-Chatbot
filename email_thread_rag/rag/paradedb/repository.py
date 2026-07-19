@@ -120,7 +120,7 @@ class EmbeddedChunk:
 class ParadeDBRepository:
     """Tenant/mailbox-scoped, transactional persistence for emails + chunks."""
 
-    def __init__(self, conn: psycopg.Connection, *, embedding_dim: int = 384):
+    def __init__(self, conn: psycopg.Connection, *, embedding_dim: int = 768):
         self.conn = conn
         self.embedding_dim = embedding_dim
 

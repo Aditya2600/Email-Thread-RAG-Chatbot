@@ -61,7 +61,7 @@ class Settings(BaseSettings):
         default_factory=lambda: PROJECT_ROOT / "data" / "processed" / "ingest_stats.json"
     )
 
-    embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
+    embedding_model_name: str = "Alibaba-NLP/gte-modernbert-base"
     reranker_model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     enable_cloud_rewrite: bool = False
     cloud_rewrite_provider: Optional[str] = None
@@ -101,13 +101,15 @@ class Settings(BaseSettings):
     tenant_id: str = Field(default_factory=lambda: os.getenv("TENANT_ID", "default"))
     mailbox_id: str = Field(default_factory=lambda: os.getenv("MAILBOX_ID", "default"))
     # Must match the vector column dimension in the migration and the encoder
-    # actually used (HashingEncoder/MiniLM-L6-v2 both emit 384-dim vectors).
-    # Changing this requires a migration + re-embedding backfill, not a config
-    # edit against mixed-dimension rows.
+    # actually used (HashingEncoder/gte-modernbert-base both emit 768-dim
+    # vectors). Changing this requires a migration + re-embedding backfill, not
+    # a config edit against mixed-dimension rows. Note that same-dimension is
+    # not the same as compatible: swapping model at a fixed 768 still needs
+    # every row re-embedded, because two models' vector spaces are unrelated.
     embedding_model_id: str = Field(
-        default_factory=lambda: os.getenv("EMBEDDING_MODEL_ID", "sentence-transformers/all-MiniLM-L6-v2")
+        default_factory=lambda: os.getenv("EMBEDDING_MODEL_ID", "Alibaba-NLP/gte-modernbert-base")
     )
-    embedding_dim: int = Field(default_factory=lambda: int(os.getenv("EMBEDDING_DIM", "384")))
+    embedding_dim: int = Field(default_factory=lambda: int(os.getenv("EMBEDDING_DIM", "768")))
     hybrid_lexical_weight: float = Field(default_factory=lambda: float(os.getenv("HYBRID_LEXICAL_WEIGHT", "1.0")))
     hybrid_dense_weight: float = Field(default_factory=lambda: float(os.getenv("HYBRID_DENSE_WEIGHT", "1.0")))
     hybrid_rrf_k: int = Field(default_factory=lambda: int(os.getenv("HYBRID_RRF_K", "60")))
@@ -134,6 +136,12 @@ class Settings(BaseSettings):
         default_factory=lambda: os.getenv("GMAIL_TOKEN_ENCRYPTION_KEY")
     )
     gmail_token_key_id: str = Field(default_factory=lambda: os.getenv("GMAIL_TOKEN_KEY_ID", "local"))
+    # Where the OAuth callback sends the browser once the mailbox is connected.
+    # The callback is reached by browser navigation from Google, so it must end
+    # on a page, not on a JSON body.
+    frontend_base_url: str = Field(
+        default_factory=lambda: os.getenv("FRONTEND_BASE_URL", "http://localhost:5173")
+    )
 
     # Stage-4 LLM contextualization. Disabled by default and inert when off:
     # ingestion enqueues nothing, no provider is constructed, and no LLM package

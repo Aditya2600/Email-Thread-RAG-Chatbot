@@ -34,7 +34,7 @@ from email_thread_rag.rag.vector_index import HashingEncoder
 
 pytestmark = pytest.mark.integration
 
-ENCODER = HashingEncoder(dim=384)
+ENCODER = HashingEncoder(dim=768)
 TENANT = "acme"
 MAILBOX = "inbox"
 MESSAGE_ID = "<msg-att@example.com>"
@@ -78,7 +78,7 @@ def clean_tables(autocommit_conn):
 
 def _settings(*, tenant_id=TENANT, **overrides) -> Settings:
     kwargs = dict(
-        rag_backend="paradedb", tenant_id=tenant_id, mailbox_id=MAILBOX, embedding_dim=384,
+        rag_backend="paradedb", tenant_id=tenant_id, mailbox_id=MAILBOX, embedding_dim=768,
         attachment_extraction_enabled=True, answer_generation_enabled=True, answer_evidence_budget=4,
     )
     kwargs.update(overrides)
@@ -121,7 +121,7 @@ def _persist_parent(conn, settings, *, tenant_id=TENANT, message_id=MESSAGE_ID, 
     )
     persist_corpus_to_paradedb(
         conn, [email], chunk_email(email), tenant_id=tenant_id, mailbox_id=MAILBOX,
-        encoder=ENCODER, embedding_dim=384, settings=settings,
+        encoder=ENCODER, embedding_dim=768, settings=settings,
     )
     return email
 
@@ -137,7 +137,7 @@ def _extract(conn, settings, pdf_bytes, *, tenant_id=TENANT, message_id=MESSAGE_
     worker = AttachmentExtractionWorker(
         store,
         FakeGmailAttachments({(message_id, GMAIL_ATT_ID): pdf_bytes}),
-        ParadeDBRepository(conn, embedding_dim=384),
+        ParadeDBRepository(conn, embedding_dim=768),
         encoder=ENCODER, settings=settings, ocr_backend=ocr_backend,
     )
     processed = worker.drain()

@@ -38,7 +38,7 @@ from graph_store_contract import GraphStoreContract
 
 pytestmark = pytest.mark.integration
 
-ENCODER = HashingEncoder(dim=384)
+ENCODER = HashingEncoder(dim=768)
 TENANT = "acme"
 MAILBOX = "inbox"
 MODEL = "fake-graph-model"
@@ -69,7 +69,7 @@ def graph_settings(**overrides) -> Settings:
         graph_model=MODEL,
         graph_schema_version=SCHEMA_VERSION,
         graph_prompt_version=PROMPT_VERSION,
-        embedding_dim=384,
+        embedding_dim=768,
     )
     kwargs.update(overrides)
     return Settings(**kwargs)
@@ -88,7 +88,7 @@ def make_email(*, doc_id="msg-2", message_id="<msg-2@example.com>", subject="Re:
 def persist(conn, email, *, settings=None, tenant_id=TENANT, mailbox_id=MAILBOX) -> dict:
     return persist_corpus_to_paradedb(
         conn, [email], chunk_email(email), tenant_id=tenant_id, mailbox_id=mailbox_id,
-        encoder=ENCODER, embedding_dim=384, settings=settings,
+        encoder=ENCODER, embedding_dim=768, settings=settings,
     )
 
 
@@ -408,7 +408,7 @@ def test_gmail_ingestion_enqueues_graph_without_calling_the_provider(autocommit_
     from email_thread_rag.gmail.sink import ParadeDBChunkSink
 
     sink = ParadeDBChunkSink(autocommit_conn, tenant_id=TENANT, mailbox_id=MAILBOX,
-                             encoder=ENCODER, embedding_dim=384, settings=graph_settings())
+                             encoder=ENCODER, embedding_dim=768, settings=graph_settings())
     email = make_email()
     email.source_type = "gmail"
     # No provider reaches the sink; if ingestion tried to call one it would fail.
@@ -424,7 +424,7 @@ def test_the_gmail_sink_queues_nothing_when_graph_is_off(autocommit_conn):
     from email_thread_rag.gmail.sink import ParadeDBChunkSink
 
     ParadeDBChunkSink(autocommit_conn, tenant_id=TENANT, mailbox_id=MAILBOX,
-                      encoder=ENCODER, embedding_dim=384).persist(make_email())
+                      encoder=ENCODER, embedding_dim=768).persist(make_email())
     assert autocommit_conn.execute("SELECT count(*) AS n FROM graph_extraction_jobs").fetchone()["n"] == 0
 
 
@@ -432,7 +432,7 @@ def test_deleting_a_gmail_message_removes_its_graph_jobs(autocommit_conn):
     from email_thread_rag.gmail.sink import ParadeDBChunkSink
 
     sink = ParadeDBChunkSink(autocommit_conn, tenant_id=TENANT, mailbox_id=MAILBOX,
-                             encoder=ENCODER, embedding_dim=384, settings=graph_settings())
+                             encoder=ENCODER, embedding_dim=768, settings=graph_settings())
     email = make_email()
     sink.persist(email)
     assert autocommit_conn.execute("SELECT count(*) AS n FROM graph_extraction_jobs").fetchone()["n"] == 1

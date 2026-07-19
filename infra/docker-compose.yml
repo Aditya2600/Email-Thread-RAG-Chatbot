@@ -26,10 +26,23 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile
+    # Ingestion is skipped when the vector index is already on the data mount:
+    # rebuilding it re-encodes the whole corpus through torch on CPU, which is
+    # minutes of pegged cores on every restart. Delete data/indexes/vector.pkl
+    # (or run the script by hand) to force a rebuild.
     command: >
-      sh -c "python -m email_thread_rag.scripts.build_dataset_slice &&
-      python -m email_thread_rag.scripts.ingest_corpus --build-slice &&
-      uvicorn email_thread_rag.app.main:app --host 0.0.0.0 --port 8000"
+      sh -c "{ test -f /app/data/indexes/vector.pkl ||
+      python -m email_thread_rag.scripts.ingest_corpus; } &&
+      exec uvicorn email_thread_rag.app.main:app --host 0.0.0.0 --port 8000"
+    environment:
+      # torch/OpenMP default to one thread per core and saturate the host during
+      # embedding. A cgroup cpu limit alone would not help: the pool is still
+      # sized from the host core count, so the threads just thrash against the
+      # quota. Capping the pool is the fix; raise it if embedding is too slow.
+      OMP_NUM_THREADS: 4
+    depends_on:
+      db:
+        condition: service_healthy
     ports:
       - "8000:8000"
     volumes:

@@ -21,7 +21,7 @@ from email_thread_rag.rag.vector_index import HashingEncoder
 
 pytestmark = pytest.mark.integration
 
-ENCODER = HashingEncoder(dim=384)
+ENCODER = HashingEncoder(dim=768)
 
 
 def _engine(conn, settings: Settings) -> RAGEngine:
@@ -53,7 +53,7 @@ def test_canonical_email_persists_via_reprocess_message(db_conn):
     assert chunks, "canonical chunker should produce at least one chunk"
 
     stats = persist_corpus_to_paradedb(
-        db_conn, [email], chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=384
+        db_conn, [email], chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=768
     )
     db_conn.commit()
     # context_jobs / graph_jobs are Stage 4/5 additions; with no settings
@@ -86,10 +86,10 @@ def test_ingest_helper_is_idempotent_and_drops_stale_chunks(db_conn):
     )
     chunks = chunk_email(email)
     persist_corpus_to_paradedb(
-        db_conn, [email], chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=384
+        db_conn, [email], chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=768
     )
     persist_corpus_to_paradedb(
-        db_conn, [email], chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=384
+        db_conn, [email], chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=768
     )
     db_conn.commit()
     count = db_conn.execute(
@@ -101,7 +101,7 @@ def test_ingest_helper_is_idempotent_and_drops_stale_chunks(db_conn):
     # Chunker re-run produces fewer chunks (simulating an updated chunker version).
     fewer_chunks = chunks[:1]
     persist_corpus_to_paradedb(
-        db_conn, [email], fewer_chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=384
+        db_conn, [email], fewer_chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=768
     )
     db_conn.commit()
     remaining = db_conn.execute(
@@ -169,7 +169,7 @@ def test_engine_end_to_end_over_paradedb(db_conn):
     target_chunks = chunk_email(target_email)
     other_chunks = chunk_email(other_tenant_email)
     persist_corpus_to_paradedb(
-        db_conn, [target_email], target_chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=384
+        db_conn, [target_email], target_chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=768
     )
     persist_corpus_to_paradedb(
         db_conn,
@@ -178,7 +178,7 @@ def test_engine_end_to_end_over_paradedb(db_conn):
         tenant_id="other-tenant",
         mailbox_id="inbox",
         encoder=ENCODER,
-        embedding_dim=384,
+        embedding_dim=768,
     )
     db_conn.commit()
 
@@ -230,7 +230,7 @@ def test_engine_available_threads_scoped_to_tenant_mailbox(db_conn):
         tenant_id="acme",
         mailbox_id="inbox",
         encoder=ENCODER,
-        embedding_dim=384,
+        embedding_dim=768,
     )
     persist_corpus_to_paradedb(
         db_conn,
@@ -239,7 +239,7 @@ def test_engine_available_threads_scoped_to_tenant_mailbox(db_conn):
         tenant_id="other-tenant",
         mailbox_id="inbox",
         encoder=ENCODER,
-        embedding_dim=384,
+        embedding_dim=768,
     )
     db_conn.commit()
 

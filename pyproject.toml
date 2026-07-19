@@ -36,7 +36,6 @@ models = [
     "torch>=2.3.0",
 ]
 serve = [
-    "gradio>=4.36.0",
     "uvicorn>=0.30.1",
 ]
 # Stage-2 ParadeDB/Postgres backend. Only imported when RAG_BACKEND=paradedb;

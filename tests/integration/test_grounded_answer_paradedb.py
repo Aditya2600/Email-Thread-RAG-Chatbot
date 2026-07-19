@@ -33,7 +33,7 @@ from email_thread_rag.rag.vector_index import HashingEncoder
 
 pytestmark = pytest.mark.integration
 
-ENCODER = HashingEncoder(dim=384)
+ENCODER = HashingEncoder(dim=768)
 TENANT = "acme"
 MAILBOX = "inbox"
 MODEL = "fake-graph-model"
@@ -86,7 +86,7 @@ def _settings(*, tenant_id=TENANT, **overrides) -> Settings:
     kwargs = dict(
         rag_backend="paradedb", tenant_id=tenant_id, mailbox_id=MAILBOX,
         graph_extraction_enabled=True, graph_base_url="http://fake.invalid/v1", graph_model=MODEL,
-        graph_schema_version=SCHEMA_VERSION, graph_prompt_version=PROMPT_VERSION, embedding_dim=384,
+        graph_schema_version=SCHEMA_VERSION, graph_prompt_version=PROMPT_VERSION, embedding_dim=768,
         answer_generation_enabled=True, answer_evidence_budget=4,
     )
     kwargs.update(overrides)
@@ -105,7 +105,7 @@ def _make_email(*, body=BODY, thread_id="thread-alpha", message_id="<msg-2@examp
 def _persist(conn, email, *, settings, tenant_id=TENANT):
     return persist_corpus_to_paradedb(
         conn, [email], chunk_email(email), tenant_id=tenant_id, mailbox_id=MAILBOX,
-        encoder=ENCODER, embedding_dim=384, settings=settings,
+        encoder=ENCODER, embedding_dim=768, settings=settings,
     )
 
 

@@ -24,7 +24,7 @@ class TextEncoder(Protocol):
 
 
 class HashingEncoder:
-    def __init__(self, dim: int = 384):
+    def __init__(self, dim: int = 768):
         self.dim = dim
 
     def encode(self, texts: list[str]) -> np.ndarray:
@@ -39,12 +39,22 @@ class HashingEncoder:
         return _l2_normalize(vectors)
 
 
+# BGE models are asymmetric: the query side wants this instruction prefix, the
+# passage side must go in bare. Keyed off the model name rather than a config
+# knob so a symmetric encoder (the current gte-modernbert-base, MiniLM, the
+# hashing fallback) cannot silently inherit a prefix meant for another model --
+# a wrong prefix is not an error anywhere, it just quietly degrades recall.
+_BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
+
+
 class SentenceTransformerEncoder:
     def __init__(self, settings: Settings, model_name: str | None = None):
         self.settings = settings
         self.model_name = model_name or settings.embedding_model_name
         self._model = None
-        self.fallback = HashingEncoder()
+        # Fallback must emit the same width as the real model, or every write
+        # into the vector column fails once the model is unavailable.
+        self.fallback = HashingEncoder(dim=settings.embedding_dim)
 
     def _load_model(self):
         if self._model is None:
@@ -60,6 +70,23 @@ class SentenceTransformerEncoder:
             return np.asarray(embeddings, dtype="float32")
         except Exception:
             return self.fallback.encode(texts)
+
+    def encode_query(self, texts: list[str]) -> np.ndarray:
+        # GTE (and every symmetric model) embeds queries as raw text, same path
+        # as passages. Only BGE takes the prefix.
+        if "bge" not in self.model_name.lower():
+            return self.encode(texts)
+        return self.encode([_BGE_QUERY_PREFIX + text for text in texts])
+
+
+def encode_query(encoder: TextEncoder, query: str) -> np.ndarray:
+    """Embed a query, using the encoder's query-side path when it has one.
+
+    Encoders without encode_query (the hashing fallback, test doubles) are
+    symmetric and just get encode().
+    """
+    encode = getattr(encoder, "encode_query", encoder.encode)
+    return encode([query])[0]
 
 
 def _l2_normalize(matrix: np.ndarray) -> np.ndarray:
@@ -92,7 +119,7 @@ class VectorIndex:
     @classmethod
     def build(cls, chunks: list[ChunkRecord], settings: Settings, encoder: TextEncoder | None = None) -> "VectorIndex":
         effective_encoder = encoder or SentenceTransformerEncoder(settings)
-        embeddings = effective_encoder.encode([(chunk.embed_text or chunk.text) for chunk in chunks]) if chunks else np.zeros((0, 384), dtype="float32")
+        embeddings = effective_encoder.encode([(chunk.embed_text or chunk.text) for chunk in chunks]) if chunks else np.zeros((0, settings.embedding_dim), dtype="float32")
         return cls(chunks, embeddings, effective_encoder)
 
     def save(self, path: Path) -> None:
@@ -126,7 +153,7 @@ class VectorIndex:
     def search(self, query: str, *, top_k: int, thread_id: str | None = None) -> list[RetrievalHit]:
         if not self.chunks:
             return []
-        query_embedding = self.encoder.encode([query])[0]
+        query_embedding = encode_query(self.encoder, query)
         query_embedding = _l2_normalize(query_embedding.reshape(1, -1))[0]
         if thread_id is not None:
             candidate_indexes = [idx for idx, chunk in enumerate(self.chunks) if chunk.thread_id == thread_id]

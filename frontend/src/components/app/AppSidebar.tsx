@@ -30,12 +30,11 @@ export function AppSidebar() {
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       <div className="flex items-center gap-2.5 px-5 pt-5 pb-4">
-        <div className="grid h-9 w-9 place-items-center rounded-xl bg-gradient-brand shadow-[var(--shadow-glow)]">
+        <div className="grid h-9 w-9 place-items-center rounded-xl bg-brand">
           <Sparkles className="h-4 w-4 text-white" strokeWidth={2.4} />
         </div>
-        <div className="min-w-0">
-          <div className="text-[15px] font-semibold tracking-tight text-ink">Inbox Copilot</div>
-          <div className="text-[11px] text-ink-muted">Grounded email intelligence</div>
+        <div className="min-w-0 text-[15px] font-semibold tracking-tight text-ink">
+          Inbox Copilot
         </div>
       </div>
 
@@ -86,7 +85,7 @@ export function AppSidebar() {
       <div className="border-t border-border px-3 py-3">
         <div className="flex items-center gap-3 rounded-lg px-2 py-1.5">
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-gradient-brand text-white text-xs">JO</AvatarFallback>
+            <AvatarFallback className="bg-brand text-white text-xs">JO</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-medium text-ink">Jordan Okafor</div>

@@ -71,7 +71,7 @@ class ParadeDBChunkSink:
         tenant_id: str,
         mailbox_id: str,
         encoder,
-        embedding_dim: int = 384,
+        embedding_dim: int = 768,
         settings=None,
     ):
         self.conn = conn

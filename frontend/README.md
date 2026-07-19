@@ -41,17 +41,16 @@ Wired to real routes:
 
 | UI | Endpoint |
 | --- | --- |
-| API status pill | `GET /health` |
 | Sources page | `GET /threads` |
 | Ask Inbox | `POST /start_session`, `POST /ask` |
 | Gmail availability | `GET /openapi.json` (checks whether the Gmail routes are mounted) |
-| Connect Gmail | `GET /gmail/oauth/start` |
+| Connect Gmail | `GET /gmail/oauth/start` (only shown once this reports available) |
 
-Not available, and shown as such rather than filled with samples:
+Not available, and left out rather than filled with samples or a "not configured" notice:
 
 - **Sync Activity** — the backend has no sync-history route.
 - **Message and attachment browsing** — nothing lists them outside an answer's
   citations.
 - **Disconnect Gmail, sync toggles, answer-generation settings** — no routes.
-- **Gmail connection state** — the backend exposes no route that reports which
-  mailbox is connected, so the UI reports only whether connecting is possible.
+- **API/Gmail status indicators** — no status pills in the UI; a failed ask
+  surfaces as a toast instead.
