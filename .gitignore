@@ -20,6 +20,14 @@ env/
 # macOS
 .DS_Store
 
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# Node
+node_modules/
+
 # Local model / tool caches
 .pycache/
 
