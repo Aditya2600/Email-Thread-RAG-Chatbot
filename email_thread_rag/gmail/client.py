@@ -48,6 +48,11 @@ class GmailClient(Protocol):
     def get_message(self, message_id: str) -> Optional[dict[str, Any]]:
         """format=full message resource, or None if it no longer exists (404)."""
 
+    def get_attachment(self, *, message_id: str, attachment_id: str) -> Optional[bytes]:
+        """Decoded attachment bytes (messages.attachments.get), or None on 404.
+
+        Called only from the Stage-8 extraction worker, never on the sync path."""
+
 
 class PubSubPushVerifier(Protocol):
     def verify(self, *, authorization_header: str | None, subscription: str | None) -> None:
@@ -141,6 +146,20 @@ class HttpxGmailClient:
 
     def get_message(self, message_id: str) -> Optional[dict[str, Any]]:
         return self._request("GET", f"/messages/{message_id}", params={"format": "full"})
+
+    def get_attachment(self, *, message_id: str, attachment_id: str) -> Optional[bytes]:
+        import base64
+
+        payload = self._request(
+            "GET", f"/messages/{message_id}/attachments/{attachment_id}"
+        )
+        if payload is None:
+            return None
+        data = payload.get("data")
+        if not data:
+            return b""
+        # Gmail returns base64url-encoded, padding-stripped bytes.
+        return base64.urlsafe_b64decode(data + "=" * (-len(data) % 4))
 
 
 class GooglePubSubPushVerifier:

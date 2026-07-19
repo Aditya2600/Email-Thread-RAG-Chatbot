@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from email_thread_rag.rag.fusion import weighted_rrf
+from email_thread_rag.rag.fusion import weighted_rrf, weighted_rrf_multi
 
 
 def test_exact_rrf_formula():
@@ -61,4 +61,45 @@ def test_deterministic_tie_break_by_chunk_id():
     fused = weighted_rrf(["z"], ["a"], k=60)  # both rank 1 in their own branch -> equal score
     ids = [chunk_id for chunk_id, *_ in fused]
     assert ids == sorted(ids)
+    assert ids == ["a", "z"]
+
+
+# --- Stage-6: the N-branch generalization used to fuse bm25 + dense + graph ---
+def test_multi_matches_two_arg_formula():
+    branches = {"bm25": ["a", "b"], "dense": ["b", "a"]}
+    fused = weighted_rrf_multi(branches, k=60, weights={"bm25": 1.0, "dense": 1.0})
+    by_id = {chunk_id: score for chunk_id, score, _ in fused}
+    assert by_id["a"] == 1.0 / 61 + 1.0 / 62
+    assert by_id["b"] == 1.0 / 62 + 1.0 / 61
+
+
+def test_multi_dedups_the_same_chunk_across_branches():
+    # A chunk found by all three branches appears exactly once, with one term
+    # per branch -- deduplicated by canonical chunk identity.
+    branches = {"bm25": ["shared"], "dense": ["shared"], "graph": ["shared"]}
+    fused = weighted_rrf_multi(branches, k=60)
+    assert len(fused) == 1
+    chunk_id, score, present = fused[0]
+    assert chunk_id == "shared"
+    assert present == {"bm25": 1, "dense": 1, "graph": 1}  # provenance: every branch
+    assert score == 3.0 / 61
+
+
+def test_multi_graph_only_chunk_is_eligible_and_carries_provenance():
+    branches = {"bm25": ["a"], "dense": ["a"], "graph": ["g"]}
+    fused = weighted_rrf_multi(branches, k=60, weights={"bm25": 1.0, "dense": 1.0, "graph": 1.0})
+    by_present = {chunk_id: present for chunk_id, _, present in fused}
+    assert by_present["g"] == {"bm25": None, "dense": None, "graph": 1}
+
+
+def test_multi_branch_weight_bounds_graph_contribution():
+    branches = {"bm25": ["a"], "graph": ["a"]}
+    fused = weighted_rrf_multi(branches, k=60, weights={"bm25": 1.0, "graph": 0.25})
+    _, score, _ = fused[0]
+    assert score == 1.0 / 61 + 0.25 / 61
+
+
+def test_multi_is_deterministic_with_tie_break_by_chunk_id():
+    branches = {"bm25": ["z"], "graph": ["a"]}  # equal score, both rank 1
+    ids = [chunk_id for chunk_id, *_ in weighted_rrf_multi(branches, k=60)]
     assert ids == ["a", "z"]

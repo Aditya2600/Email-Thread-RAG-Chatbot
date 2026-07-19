@@ -19,8 +19,9 @@ import psycopg
 
 from email_thread_rag.app.schemas import ChunkRecord, RetrievalHit
 from email_thread_rag.config import Settings
-from email_thread_rag.rag.fusion import weighted_rrf
+from email_thread_rag.rag.fusion import weighted_rrf, weighted_rrf_multi
 from email_thread_rag.rag.paradedb.repository import vector_literal
+from email_thread_rag.rag.planner import plan_query
 
 
 @dataclass
@@ -279,6 +280,7 @@ class ParadeDBEngineRetriever:
         self.encoder = encoder
         self.lexical = LexicalRetriever(conn)
         self.dense = DenseRetriever(conn, embedding_dim=settings.embedding_dim)
+        self._graph_store_cache = None
         if reranker is None:
             from email_thread_rag.rag.reranker import CrossEncoderReranker
 
@@ -293,7 +295,39 @@ class ParadeDBEngineRetriever:
         ).fetchall()
         return sorted(row["thread_id"] for row in rows)
 
-    def search(self, query: str, *, thread_id: str | None = None):
+    def _graph_store(self):
+        # Lazy: memory deployments never build this, and importing here keeps
+        # the graph package off the module-level import graph.
+        if self._graph_store_cache is None:
+            from email_thread_rag.graph.repository import PostgresGraphStore
+
+            self._graph_store_cache = PostgresGraphStore(self.conn)
+        return self._graph_store_cache
+
+    def _load_graph_chunks(self, filters: RetrievalFilters, chunk_ids: list[str]) -> list[RetrievedChunk]:
+        """Load canonical chunk rows for graph-sourced ids, re-applying the
+        tenant/mailbox/thread scope (defense in depth) and preserving the graph
+        branch's deterministic order. Returns real chunks, never fact strings."""
+        if not chunk_ids:
+            return []
+        rows = self.conn.execute(
+            f"""
+            SELECT {_ROW_COLUMNS} FROM email_chunks
+            WHERE tenant_id = %(tenant_id)s AND mailbox_id = %(mailbox_id)s
+              AND chunk_id = ANY(%(ids)s)
+              AND (%(thread_id)s::text IS NULL OR thread_id = %(thread_id)s)
+            """,
+            {
+                "tenant_id": filters.tenant_id,
+                "mailbox_id": filters.mailbox_id,
+                "ids": list(chunk_ids),
+                "thread_id": filters.thread_id,
+            },
+        ).fetchall()
+        by_id = {row["chunk_id"]: _row_to_chunk(row) for row in rows}
+        return [by_id[chunk_id] for chunk_id in chunk_ids if chunk_id in by_id]
+
+    def search(self, query: str, *, thread_id: str | None = None, evidence_top_k: int | None = None):
         from email_thread_rag.rag.retrieval import RetrievalResult
 
         filters = RetrievalFilters(
@@ -326,31 +360,63 @@ class ParadeDBEngineRetriever:
             rh.metrics.dense_score_norm = norm
             dense_retrieval_hits.append(rh)
 
-        fused = weighted_rrf(
-            [hit.chunk_id for hit in lexical_hits],
-            [hit.chunk_id for hit in dense_hits],
+        # Stage-6 deterministic planner + evidence-backed graph branch.
+        plan = plan_query(
+            query,
+            tenant_id=self.settings.tenant_id,
+            mailbox_id=self.settings.mailbox_id,
+            thread_id=thread_id,
+            settings=self.settings,
+        )
+        graph_chunks: list[RetrievedChunk] = []
+        fallback_reason: str | None = None
+        if plan.uses_graph:
+            from email_thread_rag.graph.retrieval import collect_graph_chunk_ids
+
+            graph_chunk_ids = collect_graph_chunk_ids(self._graph_store(), plan)
+            graph_chunks = self._load_graph_chunks(filters, graph_chunk_ids)
+            if not graph_chunks:
+                fallback_reason = "no_graph_evidence"  # falls back to pure hybrid
+        graph_by_id = {chunk.chunk_id: chunk for chunk in graph_chunks}
+        graph_retrieval_hits = [
+            _to_retrieval_hit(chunk, source_lists=["graph"], retrieval_rank=rank)
+            for rank, chunk in enumerate(graph_chunks, start=1)
+        ]
+
+        branches: dict[str, list[str]] = {
+            "bm25": [hit.chunk_id for hit in lexical_hits],
+            "dense": [hit.chunk_id for hit in dense_hits],
+        }
+        if graph_chunks:
+            branches["graph"] = [chunk.chunk_id for chunk in graph_chunks]
+        fused = weighted_rrf_multi(
+            branches,
             k=self.settings.hybrid_rrf_k,
-            lexical_weight=self.settings.hybrid_lexical_weight,
-            dense_weight=self.settings.hybrid_dense_weight,
+            weights={
+                "bm25": self.settings.hybrid_lexical_weight,
+                "dense": self.settings.hybrid_dense_weight,
+                "graph": self.settings.graph_branch_weight,
+            },
         )[: self.settings.fused_top_k]
 
         fused_retrieval_hits = []
-        for rank, (chunk_id, fused_score, _lexical_rank, _dense_rank) in enumerate(fused, start=1):
+        for rank, (chunk_id, fused_score, present) in enumerate(fused, start=1):
             lexical_hit = lexical_by_id.get(chunk_id)
             dense_hit = dense_by_id.get(chunk_id)
-            base = lexical_hit or dense_hit
-            source_lists = [
-                name
-                for name, present in (("bm25", lexical_hit is not None), ("dense", dense_hit is not None))
-                if present
-            ]
+            graph_chunk = graph_by_id.get(chunk_id)
+            base = lexical_hit or dense_hit or graph_chunk
+            source_lists = [name for name in ("bm25", "dense", "graph") if present.get(name) is not None]
             rh = _to_retrieval_hit(base, source_lists=source_lists, retrieval_rank=rank)
             rh.metrics.bm25_score_raw = lexical_hit.lexical_score if lexical_hit else 0.0
             rh.metrics.dense_score_raw = dense_hit.dense_score if dense_hit else 0.0
             rh.metrics.rrf_score = fused_score
             fused_retrieval_hits.append(rh)
 
-        reranked_hits = self.reranker.rerank(query, fused_retrieval_hits, top_k=self.settings.evidence_top_k)
+        # Stage-7 grounded answering widens this on its one bounded retry; the
+        # default (None) preserves existing behavior exactly.
+        reranked_hits = self.reranker.rerank(
+            query, fused_retrieval_hits, top_k=evidence_top_k or self.settings.evidence_top_k
+        )
 
         return RetrievalResult(
             query=query,
@@ -358,4 +424,7 @@ class ParadeDBEngineRetriever:
             dense_hits=dense_retrieval_hits,
             fused_hits=fused_retrieval_hits,
             reranked_hits=reranked_hits,
+            graph_hits=graph_retrieval_hits,
+            plan=plan,
+            fallback_reason=fallback_reason,
         )

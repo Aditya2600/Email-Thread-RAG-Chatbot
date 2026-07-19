@@ -44,6 +44,10 @@ def main() -> None:
                 mailbox_id=settings.mailbox_id,
                 encoder=vector_index.encoder,
                 embedding_dim=settings.embedding_dim,
+                # Queues Stage-4 context work when enabled; no-op otherwise.
+                # Ingestion never calls the LLM itself -- run the context
+                # worker to process the queue.
+                settings=settings,
             )
             conn.commit()
         finally:

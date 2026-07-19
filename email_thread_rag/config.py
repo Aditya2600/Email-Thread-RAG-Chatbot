@@ -12,7 +12,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Repo root is the parent of the email_thread_rag package directory.
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-load_dotenv(PROJECT_ROOT / ".env", override=False)
+# Auto-load the developer .env for real runs, but let a caller opt out. A test
+# (or any process that has deliberately curated its environment) sets
+# EMAIL_RAG_SKIP_DOTENV=1 so an on-disk .env cannot silently switch it onto the
+# Gmail/Postgres integrations. Without this, a .env with DATABASE_URL + Gmail
+# Pub/Sub settings would activate those paths even inside unit tests.
+if os.getenv("EMAIL_RAG_SKIP_DOTENV", "").lower() not in ("1", "true", "yes"):
+    load_dotenv(PROJECT_ROOT / ".env", override=False)
 
 
 class RetrievalThresholds(BaseModel):
@@ -57,7 +63,6 @@ class Settings(BaseSettings):
 
     embedding_model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
     reranker_model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
-    rewrite_model_name: str = "t5-small"
     enable_cloud_rewrite: bool = False
     cloud_rewrite_provider: Optional[str] = None
     cloud_rewrite_model: Optional[str] = None
@@ -107,6 +112,158 @@ class Settings(BaseSettings):
     hybrid_dense_weight: float = Field(default_factory=lambda: float(os.getenv("HYBRID_DENSE_WEIGHT", "1.0")))
     hybrid_rrf_k: int = Field(default_factory=lambda: int(os.getenv("HYBRID_RRF_K", "60")))
     hybrid_candidate_limit: int = Field(default_factory=lambda: int(os.getenv("HYBRID_CANDIDATE_LIMIT", "40")))
+
+    # Stage-3 Gmail sync. All optional: RAG_BACKEND=memory needs none of it,
+    # and nothing here is read unless a mailbox is actually being connected or
+    # synced. Same unprefixed-env-var pattern as the Stage-2 settings above.
+    gmail_client_id: Optional[str] = Field(default_factory=lambda: os.getenv("GMAIL_CLIENT_ID"))
+    gmail_client_secret: Optional[str] = Field(default_factory=lambda: os.getenv("GMAIL_CLIENT_SECRET"))
+    gmail_redirect_uri: Optional[str] = Field(default_factory=lambda: os.getenv("GMAIL_REDIRECT_URI"))
+    gmail_pubsub_topic: Optional[str] = Field(default_factory=lambda: os.getenv("GMAIL_PUBSUB_TOPIC"))
+    gmail_pubsub_subscription: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GMAIL_PUBSUB_SUBSCRIPTION")
+    )
+    gmail_pubsub_audience: Optional[str] = Field(default_factory=lambda: os.getenv("GMAIL_PUBSUB_AUDIENCE"))
+    gmail_pubsub_service_account: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GMAIL_PUBSUB_SERVICE_ACCOUNT")
+    )
+    # Base64 32-byte AES-256 key for refresh-token encryption at rest. Rotating
+    # it means re-consenting every mailbox (the stored ciphertext is not
+    # re-encryptable without the old key), hence the key_id column.
+    gmail_token_encryption_key: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GMAIL_TOKEN_ENCRYPTION_KEY")
+    )
+    gmail_token_key_id: str = Field(default_factory=lambda: os.getenv("GMAIL_TOKEN_KEY_ID", "local"))
+
+    # Stage-4 LLM contextualization. Disabled by default and inert when off:
+    # ingestion enqueues nothing, no provider is constructed, and no LLM package
+    # is imported. Any OpenAI-compatible endpoint works; nothing is hard-coded
+    # to a particular model or runtime, and no model is ever downloaded.
+    context_enabled: bool = Field(
+        default_factory=lambda: os.getenv("CONTEXT_ENABLED", "false").lower() in ("1", "true", "yes")
+    )
+    context_base_url: Optional[str] = Field(
+        default_factory=lambda: os.getenv("CONTEXT_BASE_URL") or os.getenv("MEDHA_BASE_URL")
+    )
+    context_model: Optional[str] = Field(
+        default_factory=lambda: os.getenv("CONTEXT_MODEL") or os.getenv("MEDHA_MODEL")
+    )
+    # Secret: read from the environment only, never written to a config file and
+    # never rendered into a log line, an error, or an API response.
+    context_api_key: Optional[str] = Field(
+        default_factory=lambda: os.getenv("CONTEXT_API_KEY") or os.getenv("MEDHA_API_KEY")
+    )
+    context_timeout_seconds: float = Field(
+        default_factory=lambda: float(os.getenv("CONTEXT_TIMEOUT_SECONDS", "30"))
+    )
+    context_max_tokens: int = Field(default_factory=lambda: int(os.getenv("CONTEXT_MAX_TOKENS", "96")))
+    # Part of the job fingerprint: bumping it re-contextualizes every chunk.
+    context_prompt_version: Optional[str] = Field(
+        default_factory=lambda: os.getenv("CONTEXT_PROMPT_VERSION")
+    )
+
+    # Stage-5 evidence graph extraction. Disabled by default and inert when off:
+    # ingestion enqueues nothing, no provider is constructed, and no LLM package
+    # is imported. Same OpenAI-compatible seam as Stage 4; reuses the MEDHA_*
+    # fallbacks so one endpoint can serve both. Graph results are built and
+    # queryable but not wired into the answer path or query router.
+    graph_extraction_enabled: bool = Field(
+        default_factory=lambda: os.getenv("GRAPH_EXTRACTION_ENABLED", "false").lower() in ("1", "true", "yes")
+    )
+    graph_base_url: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GRAPH_BASE_URL") or os.getenv("MEDHA_BASE_URL")
+    )
+    graph_model: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GRAPH_MODEL") or os.getenv("MEDHA_MODEL")
+    )
+    # Secret: environment only, never written to a config file or a log line.
+    graph_api_key: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GRAPH_API_KEY") or os.getenv("MEDHA_API_KEY")
+    )
+    graph_timeout_seconds: float = Field(
+        default_factory=lambda: float(os.getenv("GRAPH_TIMEOUT_SECONDS", "60"))
+    )
+    graph_max_tokens: int = Field(default_factory=lambda: int(os.getenv("GRAPH_MAX_TOKENS", "800")))
+    # Both are folded into the job fingerprint: bumping either re-extracts.
+    graph_prompt_version: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GRAPH_PROMPT_VERSION")
+    )
+    graph_schema_version: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GRAPH_SCHEMA_VERSION")
+    )
+
+    # Stage-6 deterministic query planner + evidence-backed graph retrieval.
+    # Enabled by default but inert without graph data: with no graph rows every
+    # route resolves to zero citable chunks and falls back to the existing
+    # hybrid retriever, so an existing deployment retrieves byte-identically.
+    # The planner is deterministic -- never an LLM, embeddings, spaCy, or a
+    # network call -- and only the ParadeDB retrieval path consults it; the
+    # memory backend is untouched.
+    graph_planner_enabled: bool = Field(
+        default_factory=lambda: os.getenv("GRAPH_PLANNER_ENABLED", "true").lower() in ("1", "true", "yes")
+    )
+    # Bounded weight for the graph-evidence branch in the reused weighted-RRF
+    # fusion (bm25 + dense + graph). 1.0 keeps it a peer of the lexical/dense
+    # branches; lower de-emphasizes graph-sourced chunks.
+    graph_branch_weight: float = Field(default_factory=lambda: float(os.getenv("GRAPH_BRANCH_WEIGHT", "1.0")))
+    graph_candidate_limit: int = Field(default_factory=lambda: int(os.getenv("GRAPH_CANDIDATE_LIMIT", "20")))
+    graph_temporal_candidate_limit: int = Field(
+        default_factory=lambda: int(os.getenv("GRAPH_TEMPORAL_CANDIDATE_LIMIT", "10"))
+    )
+
+    # Stage-7 grounded answering + bounded Self-RAG. Disabled by default and
+    # import-light when off: no provider is constructed and no HTTP client is
+    # imported, so the memory/deterministic answer path is byte-identical.
+    # Reuses the same OpenAI-compatible seam as Stage 4/5 (MEDHA_* fallbacks).
+    # The retry ceiling is fixed at two attempts in code (GroundedAnswerer);
+    # it is intentionally not configurable. Graph facts remain retrieval cues:
+    # answers cite the underlying email chunks, never synthetic fact rows.
+    answer_generation_enabled: bool = Field(
+        default_factory=lambda: os.getenv("ANSWER_GENERATION_ENABLED", "false").lower() in ("1", "true", "yes")
+    )
+    answer_base_url: Optional[str] = Field(
+        default_factory=lambda: os.getenv("ANSWER_BASE_URL") or os.getenv("MEDHA_BASE_URL")
+    )
+    answer_model: Optional[str] = Field(
+        default_factory=lambda: os.getenv("ANSWER_MODEL") or os.getenv("MEDHA_MODEL")
+    )
+    # Secret: environment only, never written to a config file or a log line.
+    answer_api_key: Optional[str] = Field(
+        default_factory=lambda: os.getenv("ANSWER_API_KEY") or os.getenv("MEDHA_API_KEY")
+    )
+    answer_timeout_seconds: float = Field(
+        default_factory=lambda: float(os.getenv("ANSWER_TIMEOUT_SECONDS", "60"))
+    )
+    answer_max_tokens: int = Field(default_factory=lambda: int(os.getenv("ANSWER_MAX_TOKENS", "800")))
+    # How many clean, deduplicated evidence chunks feed the LLM per attempt.
+    # Bounded; the one retry widens retrieval to twice this.
+    answer_evidence_budget: int = Field(
+        default_factory=lambda: int(os.getenv("ANSWER_EVIDENCE_BUDGET", "6"))
+    )
+
+    # Stage-8 PDF attachment extraction + local OCR + page-level citations.
+    # PDF-only by design. Extraction runs in the Gmail extraction worker, never
+    # on the sync path, so a slow parse/OCR never blocks Gmail sync. Enqueuing
+    # attachment jobs is enabled by default (it is deterministic, non-LLM work),
+    # but it only ever fires on the Postgres-backed Gmail path; the memory
+    # backend enqueues nothing and imports none of it.
+    attachment_extraction_enabled: bool = Field(
+        default_factory=lambda: os.getenv("ATTACHMENT_EXTRACTION_ENABLED", "true").lower()
+        in ("1", "true", "yes")
+    )
+    # Oversized guard: attachments larger than this are rejected safely
+    # (extraction_status='failed', reason 'oversized') and never enter retrieval.
+    attachment_max_bytes: int = Field(
+        default_factory=lambda: int(os.getenv("ATTACHMENT_MAX_BYTES", str(20_000_000)))
+    )
+    # OCR fallback for image-only/scanned PDF pages. Off by default and optional:
+    # the Tesseract backend lives behind the 'ocr' extra. When disabled or
+    # unavailable, a page with no usable native text is recorded as unavailable
+    # rather than having text invented for it.
+    attachment_ocr_enabled: bool = Field(
+        default_factory=lambda: os.getenv("ATTACHMENT_OCR_ENABLED", "false").lower()
+        in ("1", "true", "yes")
+    )
 
     def ensure_directories(self) -> None:
         for path in (

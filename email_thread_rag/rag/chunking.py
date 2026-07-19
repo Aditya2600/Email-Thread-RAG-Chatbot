@@ -169,18 +169,30 @@ def chunk_attachment(
 ) -> list[ChunkRecord]:
     chunks: list[ChunkRecord] = []
     for page in attachment.pages:
+        # native_pdf vs ocr, carried on every chunk so a citation can be labeled
+        # OCR-derived and never presented as byte-perfect original text.
+        extraction_method = "ocr" if page.ocr_used else "native_pdf"
         page_chunks = list(sliding_text_chunks(page.text, chunk_size=chunk_size, overlap=overlap)) or [page.text]
         for index, text in enumerate(page_chunks):
             clean = text.strip()
-            # embed_text carries parent-email provenance + filename/page so the
-            # attachment chunk is findable by email context; text stays pure.
+            if not clean:
+                # Unavailable page (image-only, OCR off) or empty window: never
+                # emit an empty chunk -- it would enter retrieval as blank text.
+                continue
+            # Page-local span: where this chunk sits inside the page's own text.
+            # (-1 -> unknown; sliding windows are substrings so find normally hits.)
+            page_start = page.text.find(clean)
+            source_start = page_start if page_start >= 0 else None
+            source_end = (page_start + len(clean)) if page_start >= 0 else None
+            # embed_text carries parent-email provenance + filename + "Page: N" so
+            # the attachment chunk is findable by email context; text stays pure.
             embed_text = build_embed_text(
                 clean,
                 sender=sender,
                 date=message_date,
                 subject=subject,
             )
-            header_extra = f"Attachment: {attachment.filename} (page {page.page_no})"
+            header_extra = f"Attachment: {attachment.filename}\nPage: {page.page_no}"
             embed_text = f"{header_extra}\n{embed_text}" if embed_text != clean else f"{header_extra}\n\n{clean}"
             chunks.append(
                 ChunkRecord(
@@ -196,11 +208,17 @@ def chunk_attachment(
                     subject=subject,
                     text=clean,
                     embed_text=embed_text,
+                    source_start=source_start,
+                    source_end=source_end,
                     ocr_used=page.ocr_used,
                     token_count=count_tokens(text),
                     source_path=attachment.source_path,
                     source_type=source_type,
-                    metadata={"media_type": attachment.media_type},
+                    metadata={
+                        "media_type": attachment.media_type,
+                        "attachment_id": attachment.attachment_id,
+                        "extraction_method": extraction_method,
+                    },
                 )
             )
     return chunks

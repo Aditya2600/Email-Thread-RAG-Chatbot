@@ -218,12 +218,18 @@ def build_embed_text(
     subject: str | None = None,
     thread_id: str | None = None,
     in_reply_to: str | None = None,
+    context_prefix: str | None = None,
 ) -> str:
-    """Build compact retrieval text: clean header block + exact authored ``text``.
+    """Build compact retrieval text: header block + optional context + exact ``text``.
 
-    Only ``embed_text`` carries these headers; the citable ``text`` stays pure
-    authored evidence. ``Cc`` is populated strictly from ``cc`` (never ``to``).
-    Absent fields are omitted rather than rendered blank.
+    This is the ONLY place headers/context are assembled into retrieval text.
+    Stage 4 re-runs it with a ``context_prefix``; every other caller passes none
+    and gets byte-identical Stage-1 output, which is what lets a chunk be
+    re-contextualized without its deterministic form ever drifting.
+
+    Only ``embed_text`` carries headers and context; the citable ``text`` stays
+    pure authored evidence. ``Cc`` is populated strictly from ``cc`` (never
+    ``to``). Absent fields are omitted rather than rendered blank.
     """
     header_lines: list[str] = []
     if sender:
@@ -243,9 +249,15 @@ def build_embed_text(
     if in_reply_to:
         header_lines.append(f"In-Reply-To: {in_reply_to}")
 
+    body = text
+    if context_prefix and context_prefix.strip():
+        # Between headers and evidence, never inside `text`: the model's words
+        # are retrieval scaffolding and must never become citable evidence.
+        body = f"{context_prefix.strip()}\n\n{text}"
+
     if not header_lines:
-        return text
-    return "\n".join(header_lines) + "\n\n" + text
+        return body
+    return "\n".join(header_lines) + "\n\n" + body
 
 
 # Known limitations of deterministic segmentation (documented, not hidden):

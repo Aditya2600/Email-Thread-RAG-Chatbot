@@ -91,6 +91,9 @@ class FakeGmailClient:
 
         self.history_expired = False
         self.fail_get_message_ids: set[str] = set()
+        # Scripted attachment bytes, keyed by (message_id, attachment_id).
+        self.attachments: dict[tuple[str, str], bytes] = {}
+        self.fail_get_attachment_ids: set[str] = set()
         self.calls: list[tuple[str, Any]] = []
         self.stop_watch_calls = 0
 
@@ -124,6 +127,12 @@ class FakeGmailClient:
         if message_id in self.fail_get_message_ids:
             raise RuntimeError(f"simulated Gmail failure for {message_id}")
         return self.messages.get(message_id)
+
+    def get_attachment(self, *, message_id: str, attachment_id: str) -> Optional[bytes]:
+        self.calls.append(("get_attachment", (message_id, attachment_id)))
+        if attachment_id in self.fail_get_attachment_ids:
+            raise RuntimeError(f"simulated Gmail attachment failure for {attachment_id}")
+        return self.attachments.get((message_id, attachment_id))
 
     def history_calls(self) -> list[int]:
         return [arg for name, arg in self.calls if name == "list_history"]

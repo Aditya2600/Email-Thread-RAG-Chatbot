@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field, model_validator
 
 
 ChunkKind = Literal["email", "attachment"]
-SourceType = Literal["eml", "enron_archive", "fixture", "manual"]
+SourceType = Literal["eml", "enron_archive", "fixture", "gmail", "manual"]
 
 
 class AttachmentPage(BaseModel):
@@ -111,6 +111,53 @@ class Citation(BaseModel):
     formatted: str
 
 
+AnswerStatus = Literal["answered", "abstained"]
+
+
+class AnswerCitation(BaseModel):
+    """A Stage-7 grounded citation. ``quote`` is copied verbatim from the cited
+    chunk's clean authored ``ChunkRecord.text`` (never embed_text, headers,
+    metadata, graph prose, or quoted history), and ``quote_start``/``quote_end``
+    are its exact offsets into that clean text."""
+
+    chunk_id: str
+    message_id: str
+    quote: str
+    quote_start: int
+    quote_end: int
+    # Stage-8 attachment citation identity (None for email-body chunks). An
+    # OCR-derived quote (``ocr_used=True``) is labeled as such and must never be
+    # presented as byte-perfect original document text.
+    page_no: Optional[int] = None
+    attachment_name: Optional[str] = None
+    ocr_used: bool = False
+    extraction_method: Optional[str] = None
+
+
+class AnswerClaim(BaseModel):
+    """One factual claim in a grounded answer, with the citations that validated
+    it. Every claim that survives validation has >=1 valid citation."""
+
+    text: str
+    citations: List[AnswerCitation] = Field(default_factory=list)
+
+
+class AnswerResult(BaseModel):
+    """Stage-7 grounded answering outcome. Either an ``answered`` result whose
+    every claim is citation-backed by clean source text, or an explicit
+    ``abstained`` result -- never an unsupported answer. ``trace`` is body-free
+    (routes, candidate counts, validation rule, attempt count); it never carries
+    email text."""
+
+    status: AnswerStatus
+    answer: str
+    claims: List[AnswerClaim] = Field(default_factory=list)
+    citations: List[AnswerCitation] = Field(default_factory=list)
+    attempts: int = 0
+    abstain_reason: Optional[str] = None
+    trace: Dict[str, Any] = Field(default_factory=dict)
+
+
 class ClauseValidation(BaseModel):
     clause_text: str
     kept: bool
@@ -186,6 +233,9 @@ class AskResponse(BaseModel):
     trace_id: str
     outside_thread_used: bool = False
     metrics: MetricsResponse = Field(default_factory=MetricsResponse)
+    # Stage-7: "answered" or "abstained" when grounded answering is enabled;
+    # None on the default deterministic answer path.
+    answer_status: Optional[AnswerStatus] = None
 
 
 class TraceRecord(BaseModel):

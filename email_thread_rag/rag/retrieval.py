@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from email_thread_rag.app.schemas import ChunkRecord, RetrievalHit
@@ -18,6 +18,13 @@ class RetrievalResult:
     dense_hits: list[RetrievalHit]
     fused_hits: list[RetrievalHit]
     reranked_hits: list[RetrievalHit]
+    # Stage-6 additive fields (safe defaults keep the memory path byte-identical):
+    # the graph-evidence branch, the deterministic plan, and why (if) graph
+    # retrieval fell back to hybrid. ``plan`` is typed loosely so this module
+    # stays free of the planner/graph imports the memory backend must not need.
+    graph_hits: list[RetrievalHit] = field(default_factory=list)
+    plan: object | None = None
+    fallback_reason: str | None = None
 
 
 def load_chunks(path: Path) -> list[ChunkRecord]:
@@ -65,7 +72,9 @@ class HybridRetriever:
     def available_threads(self) -> list[str]:
         return sorted({chunk.thread_id for chunk in self.chunks})
 
-    def search(self, query: str, *, thread_id: str | None = None) -> RetrievalResult:
+    def search(
+        self, query: str, *, thread_id: str | None = None, evidence_top_k: int | None = None
+    ) -> RetrievalResult:
         bm25_hits = self.bm25_index.search(query, top_k=self.settings.bm25_top_k, thread_id=thread_id)
         dense_hits = self.vector_index.search(query, top_k=self.settings.dense_top_k, thread_id=thread_id)
         fused_hits = reciprocal_rank_fusion(
@@ -74,7 +83,11 @@ class HybridRetriever:
             k=60,
             top_k=self.settings.fused_top_k,
         )
-        reranked_hits = self.reranker.rerank(query, fused_hits, top_k=self.settings.evidence_top_k)
+        # evidence_top_k (None by default) lets Stage-7's bounded retry widen the
+        # reranked pool without changing the default retrieval behavior.
+        reranked_hits = self.reranker.rerank(
+            query, fused_hits, top_k=evidence_top_k or self.settings.evidence_top_k
+        )
         return RetrievalResult(
             query=query,
             bm25_hits=bm25_hits,

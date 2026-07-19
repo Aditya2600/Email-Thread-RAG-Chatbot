@@ -81,7 +81,6 @@ def test_end_to_end_manifest_build_and_ingest(tmp_path, sample_records):
         reranker=CrossEncoderReranker(settings, scorer=OverlapRerankScorer()),
     )
     engine = RAGEngine(settings, retriever=retriever)
-    engine.rewriter._load_model = lambda: (_ for _ in ()).throw(RuntimeError("offline"))
     session = engine.session_store.start_session("allen-p:thread-local")
     outcome = engine.ask(session.session_id, "What amount is in the attachment?", search_outside_thread=False)
     assert "[msg: <fixture-msg-1@example.com>, page: 1]" in outcome.response.answer

@@ -14,6 +14,58 @@ engine = RAGEngine(settings)
 app = FastAPI(title="Email Thread RAG Chatbot")
 
 
+def mount_gmail_routes(app: FastAPI, settings) -> bool:
+    """Attach the Stage-3 Gmail routes, but only if Gmail is configured.
+
+    Every import here is function-local on purpose: RAG_BACKEND=memory must
+    import this module without the gmail/postgres extras installed. Returns
+    whether the routes were mounted.
+    """
+    if not (settings.gmail_pubsub_subscription and settings.database_url):
+        return False
+
+    from email_thread_rag.gmail.cipher import build_token_cipher
+    from email_thread_rag.gmail.client import GooglePubSubPushVerifier, HttpxGmailClient
+    from email_thread_rag.gmail.oauth import refresh_access_token
+    from email_thread_rag.gmail.repository import PostgresSyncStore
+    from email_thread_rag.gmail.routes import build_oauth_router
+    from email_thread_rag.gmail.webhook import build_router
+    from email_thread_rag.rag.paradedb.repository import connect
+
+    # autocommit: no transaction is left open between requests.
+    conn = connect(settings.database_url, autocommit=True)
+    store_factory = lambda: PostgresSyncStore(conn)  # noqa: E731
+
+    app.include_router(
+        build_router(
+            store_factory=store_factory,
+            verifier=GooglePubSubPushVerifier(
+                audience=settings.gmail_pubsub_audience or settings.api_base_url,
+                expected_subscription=settings.gmail_pubsub_subscription,
+                expected_service_account=settings.gmail_pubsub_service_account,
+            ),
+        )
+    )
+    app.include_router(
+        build_oauth_router(
+            settings=settings,
+            store_factory=store_factory,
+            client_factory=lambda refresh_token: HttpxGmailClient(
+                refresh_access_token(
+                    refresh_token=refresh_token,
+                    client_id=settings.gmail_client_id,
+                    client_secret=settings.gmail_client_secret,
+                )
+            ),
+            cipher=build_token_cipher(settings),
+        )
+    )
+    return True
+
+
+mount_gmail_routes(app, settings)
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}

@@ -23,7 +23,9 @@ services:
       timeout: 5s
       retries: 10
   api:
-    build: .
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
     command: >
       sh -c "python -m email_thread_rag.scripts.build_dataset_slice &&
       python -m email_thread_rag.scripts.ingest_corpus --build-slice &&
@@ -31,20 +33,11 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./data:/app/data
-      - ./runs:/app/runs
-  ui:
-    build: .
-    command: python -m email_thread_rag.ui.app
-    environment:
-      - EMAIL_RAG_API_BASE_URL=http://api:8000
-    ports:
-      - "7860:7860"
-    volumes:
-      - ./data:/app/data
-      - ./runs:/app/runs
-    depends_on:
-      - api
+      - ../data:/app/data
+      - ../runs:/app/runs
+
+# Frontend (frontend/) isn't dockerized: run it with `npm run dev` against
+# this api service (VITE_BACKEND_ORIGIN=http://localhost:8000).
 
 volumes:
   paradedb_data:

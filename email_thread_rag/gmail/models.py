@@ -67,6 +67,14 @@ class OAuthState:
     redirect_uri: str
     expires_at: datetime
 
+    def __repr__(self) -> str:  # pragma: no cover - trivial
+        # The PKCE verifier is a secret: the default dataclass repr would put it
+        # in any traceback or log line that formats an OAuthState.
+        return (
+            f"OAuthState(state={self.state!r}, tenant_id={self.tenant_id!r}, "
+            f"mailbox_id={self.mailbox_id!r}, expires_at={self.expires_at!r})"
+        )
+
 
 @dataclass
 class GmailNotification:

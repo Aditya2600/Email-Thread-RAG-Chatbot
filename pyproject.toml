@@ -34,7 +34,6 @@ models = [
     "huggingface-hub>=0.23.4",
     "sentence-transformers>=2.7.0",
     "torch>=2.3.0",
-    "transformers>=4.41.2",
 ]
 serve = [
     "gradio>=4.36.0",
@@ -44,6 +43,24 @@ serve = [
 # memory-only installs/imports/tests never touch this.
 postgres = [
     "psycopg[binary]>=3.1.18",
+]
+# Stage-3 Gmail sync. Only imported when a mailbox is connected/synced;
+# RAG_BACKEND=memory never touches any of this. The Gmail REST calls go over
+# httpx (already a core dependency) -- google-auth is here solely to verify the
+# OIDC token on Pub/Sub pushes, and cryptography solely to encrypt refresh
+# tokens at rest.
+gmail = [
+    "cryptography>=42.0.0",
+    "google-auth>=2.29.0",
+    "psycopg[binary]>=3.1.18",
+]
+# Stage-8 local OCR fallback for scanned/image-only PDF pages. Only used when
+# ATTACHMENT_OCR_ENABLED=true; the Tesseract backend lazy-imports these, and when
+# they are absent a scanned page is recorded as unavailable (never invented).
+# Tesseract is a local binary -- no cloud OCR, no API key, no model download.
+ocr = [
+    "pillow>=10.3.0",
+    "pytesseract>=0.3.10",
 ]
 dev = [
     "pytest>=8.2.1",
@@ -56,5 +73,5 @@ exclude = ["src*", "tests*", "data*", "runs*", "infra*", "docs*"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 markers = [
-    "integration: requires a running ParadeDB/Postgres instance (see docker-compose.yml's `db` service)",
+    "integration: requires a running ParadeDB/Postgres instance (see infra/docker-compose.yml's `db` service)",
 ]

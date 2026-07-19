@@ -20,12 +20,11 @@ def test_session_store_keeps_last_eight_turns(sample_records):
     assert saved.recent_turns[-1].text == "turn 9"
 
 
-def test_follow_up_rewrite_uses_preserved_focus_for_and_when(sample_records, monkeypatch):
+def test_follow_up_rewrite_uses_preserved_focus_for_and_when(sample_records):
     settings, _, _, _ = sample_records
     store = SessionStore(settings)
     memory = MemoryManager()
     rewriter = QueryRewriter(settings)
-    monkeypatch.setattr(rewriter, "_load_model", lambda: (_ for _ in ()).throw(RuntimeError("boom")))
 
     session = store.start_session("allen-p:instructions for ferc meetings")
     session = memory.update_from_user_text(session, "What were the instructions about?")
@@ -45,29 +44,11 @@ def test_follow_up_rewrite_uses_preserved_focus_for_and_when(sample_records, mon
     assert result.query == "When was the FERC meeting mentioned in Instructions for FERC Meetings?"
 
 
-def test_t5_generic_follow_up_rewrite_falls_back_to_context_aware_rule(sample_records, monkeypatch):
+def test_generic_follow_up_rewrite_falls_back_to_context_aware_rule(sample_records):
     settings, _, _, _ = sample_records
     store = SessionStore(settings)
     memory = MemoryManager()
     rewriter = QueryRewriter(settings)
-
-    class FakeIds(list):
-        @property
-        def shape(self):
-            return (1, len(self[0]))
-
-    class FakeTokenizer:
-        def __call__(self, prompt, return_tensors="pt", truncation=True):
-            return {"input_ids": FakeIds([[1, 2, 3]])}
-
-        def decode(self, *_args, **_kwargs):
-            return "FERC meetings"
-
-    class FakeModel:
-        def generate(self, **_kwargs):
-            return FakeIds([[1, 2, 3]])
-
-    monkeypatch.setattr(rewriter, "_load_model", lambda: (FakeTokenizer(), FakeModel()))
 
     session = store.start_session("allen-p:instructions for ferc meetings")
     session = memory.update_from_user_text(session, "What were the instructions about?")

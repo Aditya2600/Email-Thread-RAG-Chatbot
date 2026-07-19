@@ -56,7 +56,9 @@ def test_canonical_email_persists_via_reprocess_message(db_conn):
         db_conn, [email], chunks, tenant_id="acme", mailbox_id="inbox", encoder=ENCODER, embedding_dim=384
     )
     db_conn.commit()
-    assert stats == {"messages": 1, "chunks": len(chunks)}
+    # context_jobs / graph_jobs are Stage 4/5 additions; with no settings
+    # passed, both are off and nothing is queued.
+    assert stats == {"messages": 1, "chunks": len(chunks), "context_jobs": 0, "graph_jobs": 0}
 
     row = db_conn.execute(
         "SELECT chunk_id, text, embed_text FROM email_chunks WHERE tenant_id='acme' AND mailbox_id='inbox' "

@@ -8,7 +8,15 @@ from time import perf_counter
 from typing import Iterable
 from uuid import uuid4
 
-from email_thread_rag.app.schemas import AskResponse, ClauseValidation, MetricsResponse, RetrievalHit, TraceRecord
+from email_thread_rag.app.schemas import (
+    AnswerCitation,
+    AskResponse,
+    Citation,
+    ClauseValidation,
+    MetricsResponse,
+    RetrievalHit,
+    TraceRecord,
+)
 from email_thread_rag.app.sessions import SessionStore
 from email_thread_rag.config import Settings, get_settings
 from email_thread_rag.rag.answer import AnswerBuilder, DraftAnswer
@@ -40,6 +48,10 @@ class RAGEngine:
         rewriter: QueryRewriter | None = None,
         answer_builder: AnswerBuilder | None = None,
         citation_validator: CitationValidator | None = None,
+        # Stage-7: inject a GroundedAnswerer (tests pass one with a fake
+        # provider). When omitted, one is built only if answer generation is
+        # enabled -- otherwise the default deterministic answer path is used.
+        grounded_answerer=None,
     ):
         self.settings = settings or get_settings()
         self.session_store = session_store or SessionStore(self.settings)
@@ -48,14 +60,27 @@ class RAGEngine:
         self.rewriter = rewriter or QueryRewriter(self.settings)
         self.answer_builder = answer_builder or AnswerBuilder()
         self.citation_validator = citation_validator or CitationValidator()
+        self.grounded_answerer = grounded_answerer or self._maybe_build_grounded_answerer()
         self.run_dir = self.settings.runs_dir / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.trace_path = self.run_dir / "trace.jsonl"
+
+    def _maybe_build_grounded_answerer(self):
+        # Function-local imports: the disabled/memory default never imports the
+        # answer provider or the grounded flow, keeping this path import-light.
+        if not self.settings.answer_generation_enabled:
+            return None
+        from email_thread_rag.rag.answer_provider import build_answer_provider
+        from email_thread_rag.rag.grounded_answer import GroundedAnswerer
+
+        return GroundedAnswerer(self.retriever, build_answer_provider(self.settings), self.settings)
 
     def available_threads(self) -> list[str]:
         return self.retriever.available_threads()
 
     def ask(self, session_id: str, user_text: str, *, search_outside_thread: bool) -> AskOutcome:
+        if self.grounded_answerer is not None:
+            return self._grounded_ask(session_id, user_text, search_outside_thread=search_outside_thread)
         started = perf_counter()
         trace_id = str(uuid4())
         session = self.session_store.get(session_id)
@@ -210,6 +235,84 @@ class RAGEngine:
             )
         return flattened
 
+    def _grounded_ask(self, session_id: str, user_text: str, *, search_outside_thread: bool) -> AskOutcome:
+        """Stage-7 grounded answer path: retrieve -> draft -> validate ->
+        accept | one retry | abstain. Never returns an unsupported answer."""
+        started = perf_counter()
+        trace_id = str(uuid4())
+        session = self.session_store.get(session_id)
+        session = self.memory_manager.update_from_user_text(session, user_text)
+        rewrite_result = self.rewriter.rewrite(user_text, session)
+        thread_id = None if search_outside_thread else session.thread_id
+
+        result = self.grounded_answerer.answer(rewrite_result.query, thread_id=thread_id)
+        citations = [self._answer_citation_to_citation(citation) for citation in result.citations]
+
+        session = self.memory_manager.update_from_answer(session, result.answer)
+        self.session_store.save(session)
+        self.session_store.append_turn(session_id, "user", user_text)
+        self.session_store.append_turn(session_id, "assistant", result.answer)
+
+        response = AskResponse(
+            answer=result.answer,
+            citations=citations,
+            rewrite=rewrite_result.query,
+            rewrite_mode=rewrite_result.mode,
+            retrieved=[],
+            trace_id=trace_id,
+            outside_thread_used=search_outside_thread,
+            metrics=MetricsResponse(evidence_count=len({citation.chunk_id for citation in citations})),
+            answer_status=result.status,
+        )
+        trace = TraceRecord(
+            trace_id=trace_id,
+            session_id=session_id,
+            thread_id=session.thread_id,
+            user_text=user_text,
+            rewrite=rewrite_result.query,
+            rewrite_mode=rewrite_result.mode,
+            retrieved_items=[],
+            fused_ranking=[],
+            reranked_items=[],
+            used_chunks=[citation.chunk_id for citation in result.citations],
+            final_answer=result.answer,
+            citations=[citation.model_dump() for citation in citations],
+            latency_ms=(perf_counter() - started) * 1000.0,
+            token_counts=rewrite_result.token_counts,
+            # Body-free: routes, candidate counts, the failing/ passing validation
+            # rule, and the attempt count -- never email text.
+            flags={
+                "answer_generation": True,
+                "answer_status": result.status,
+                "answer_attempts": result.attempts,
+                "answer_abstain_reason": result.abstain_reason,
+                "answer_trace": result.trace,
+            },
+            metrics=response.metrics,
+            fallback_trigger_reason=result.abstain_reason,
+        )
+        append_jsonl(self.trace_path, trace.model_dump(mode="json"))
+        return AskOutcome(response=response, trace=trace)
+
+    def _answer_citation_to_citation(self, citation: AnswerCitation) -> Citation:
+        # The public citation carries the exact clean-text quote -- never metadata.
+        # Attachment citations surface the page and, when OCR-derived, say so:
+        # an OCR quote is not byte-perfect original document text.
+        if citation.page_no is not None:
+            label = citation.attachment_name or "attachment"
+            method = " (OCR)" if citation.ocr_used else ""
+            formatted = f"[{label}, page: {citation.page_no}{method}]"
+        else:
+            formatted = f"[msg: {citation.message_id}]"
+        return Citation(
+            message_id=citation.message_id,
+            page_no=citation.page_no,
+            chunk_id=citation.chunk_id,
+            clause_text=citation.quote,
+            clause_support_score=1.0,
+            formatted=formatted,
+        )
+
     def _build_trace(
         self,
         *,
@@ -228,6 +331,10 @@ class RAGEngine:
         fallback_trigger_reason: str | None,
     ) -> TraceRecord:
         result_entries = retrieval_payload["results"]
+        # Stage-6 planner tracing: routes, rule reasons, candidate counts, and the
+        # fallback reason -- inspectable in the trace, never raw email bodies.
+        main_result = result_entries[0]["result"] if result_entries else None
+        plan = getattr(main_result, "plan", None)
         retrieved_items: list[dict] = []
         fused_ranking: list[dict] = []
         reranked_items: list[dict] = []
@@ -259,6 +366,10 @@ class RAGEngine:
                 "use_cloud_rewrite": self.settings.enable_cloud_rewrite,
                 "ocr_used_anywhere": any(hit.chunk.ocr_used for hit in retrieval_payload["hits"]),
                 "outside_thread_used": outside_thread_used,
+                "graph_routes": [route.value for route in plan.routes] if plan is not None else None,
+                "graph_rules": list(plan.rules) if plan is not None else None,
+                "graph_fallback_reason": getattr(main_result, "fallback_reason", None),
+                "graph_candidate_count": len(getattr(main_result, "graph_hits", []) or []),
             },
             clause_validations=validation.clause_validations,
             metrics=validation.metrics,

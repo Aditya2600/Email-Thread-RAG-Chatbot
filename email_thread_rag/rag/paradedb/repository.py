@@ -40,11 +40,17 @@ def _require_database_url(database_url: str | None) -> str:
     return database_url
 
 
-def connect(database_url: str | None) -> psycopg.Connection:
-    """Open a connection, failing clearly if config or connectivity is bad."""
+def connect(database_url: str | None, *, autocommit: bool = False) -> psycopg.Connection:
+    """Open a connection, failing clearly if config or connectivity is bad.
+
+    ``autocommit=True`` is what the Gmail sync worker uses: with it, statements
+    outside an explicit ``conn.transaction()`` block don't leave a transaction
+    open, so no transaction is held across a Gmail API call. Multi-statement
+    atomicity still comes from explicit ``transaction()`` blocks.
+    """
     url = _require_database_url(database_url)
     try:
-        return psycopg.connect(url, row_factory=dict_row)
+        return psycopg.connect(url, row_factory=dict_row, autocommit=autocommit)
     except psycopg.OperationalError as exc:
         raise ParadeDBConfigError(f"Could not connect to ParadeDB at DATABASE_URL: {exc}") from exc
 
@@ -277,6 +283,65 @@ class ParadeDBRepository:
             )
             self.delete_stale_chunks(message_db_id, current_ids, tenant_id=tenant_id, mailbox_id=mailbox_id)
         return message_db_id
+
+    def delete_message(self, message_id: str, *, tenant_id: str, mailbox_id: str) -> int:
+        """Remove a message and its chunks. Returns the chunk count deleted.
+
+        A hard delete, not a flag: a tombstone column would leave the rows in
+        the BM25/HNSW indexes and every retrieval query would have to remember
+        to exclude them. Deleting is what actually makes the chunks
+        unretrievable.
+        """
+        with self.conn.transaction():
+            deleted = self.conn.execute(
+                "DELETE FROM email_chunks WHERE message_id = %s AND tenant_id = %s AND mailbox_id = %s",
+                (message_id, tenant_id, mailbox_id),
+            ).rowcount
+            self.conn.execute(
+                "DELETE FROM email_messages WHERE message_id = %s AND tenant_id = %s AND mailbox_id = %s",
+                (message_id, tenant_id, mailbox_id),
+            )
+        return deleted
+
+    def replace_attachment_chunks(
+        self,
+        message_id: str,
+        attachment_id: str,
+        embedded_chunks: list[EmbeddedChunk],
+        *,
+        tenant_id: str,
+        mailbox_id: str,
+    ) -> int:
+        """Upsert one attachment's page chunks and drop the stale ones, atomically.
+
+        Scoped to a single attachment (matched by its ``doc_id`` in metadata), so
+        re-extracting a changed attachment replaces only *its* page chunks and
+        never touches the parent email's body chunks. Returns the number of
+        current chunks written.
+        """
+        with self.conn.transaction():
+            found = self.conn.execute(
+                "SELECT id FROM email_messages WHERE tenant_id = %s AND mailbox_id = %s AND message_id = %s",
+                (tenant_id, mailbox_id, message_id),
+            ).fetchone()
+            if found is None:
+                # Parent email not persisted (deleted mid-flight): nothing to attach to.
+                return 0
+            message_db_id = found["id"]
+            current_ids = self.upsert_chunks(
+                message_db_id, embedded_chunks, tenant_id=tenant_id, mailbox_id=mailbox_id
+            )
+            self.conn.execute(
+                """
+                DELETE FROM email_chunks
+                WHERE message_db_id = %s AND tenant_id = %s AND mailbox_id = %s
+                  AND chunk_kind = 'attachment'
+                  AND metadata->>'_doc_id' = %s
+                  AND NOT (chunk_id = ANY(%s))
+                """,
+                (message_db_id, tenant_id, mailbox_id, attachment_id, current_ids),
+            )
+        return len(current_ids)
 
     def load_chunk(self, chunk_id: str, *, tenant_id: str, mailbox_id: str) -> dict[str, Any] | None:
         return self.conn.execute(

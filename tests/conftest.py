@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import socket
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -14,6 +15,60 @@ from email_thread_rag.rag.reranker import CrossEncoderReranker, OverlapRerankSco
 from email_thread_rag.rag.retrieval import HybridRetriever
 from email_thread_rag.rag.rewrite import RewriteResult
 from email_thread_rag.rag.vector_index import HashingEncoder, VectorIndex
+
+
+# Env vars a developer's local .env sets that would otherwise silently switch a
+# unit test onto the real Gmail/Postgres integrations. Ordinary unit tests must
+# declare the configuration they need explicitly (via Settings(...)), not inherit
+# it from the ambient .env; integration tests are exempt and set DATABASE_URL
+# themselves. See config.py's module-level load_dotenv: these land in os.environ
+# and Settings' default_factory reads them lazily at construction, so clearing
+# them here (before any Settings() is built) is what restores isolation.
+_AMBIENT_INTEGRATION_ENV = (
+    "DATABASE_URL",
+    "RAG_BACKEND",
+    "GMAIL_CLIENT_ID",
+    "GMAIL_CLIENT_SECRET",
+    "GMAIL_REDIRECT_URI",
+    "GMAIL_PUBSUB_TOPIC",
+    "GMAIL_PUBSUB_SUBSCRIPTION",
+    "GMAIL_PUBSUB_AUDIENCE",
+    "GMAIL_PUBSUB_SERVICE_ACCOUNT",
+    "GMAIL_TOKEN_ENCRYPTION_KEY",
+    "GMAIL_TOKEN_KEY_ID",
+)
+
+
+@pytest.fixture(autouse=True)
+def isolate_ambient_integration_env(request, monkeypatch):
+    """Keep a developer's .env from silently activating Gmail/DB in unit tests."""
+    if request.node.get_closest_marker("integration"):
+        return
+    for name in _AMBIENT_INTEGRATION_ENV:
+        monkeypatch.delenv(name, raising=False)
+
+
+@pytest.fixture(autouse=True)
+def no_network_in_gmail_unit_tests(request, monkeypatch):
+    """Fail any Gmail or context unit test that opens a real socket.
+
+    The Stage-3/Stage-4 tests must run against fakes only. This exists because
+    it is easy to *think* a fake is injected while a default argument still
+    points at the real HTTP client -- that mistake passes silently otherwise,
+    and quietly calls Google (Stage 3) or a live LLM endpoint (Stage 4).
+    FastAPI's TestClient uses an in-process ASGI transport and opens no socket,
+    so it is unaffected. Integration tests (which need Postgres) are exempt.
+    """
+    if not request.module.__name__.startswith(("test_gmail", "test_context", "test_graph")):
+        return
+
+    def blocked(self, *args, **kwargs):
+        raise AssertionError(
+            "this test opened a network connection; Gmail unit tests must use fakes only"
+        )
+
+    monkeypatch.setattr(socket.socket, "connect", blocked)
+    monkeypatch.setattr(socket.socket, "connect_ex", blocked)
 
 
 class RuleOnlyRewriter:

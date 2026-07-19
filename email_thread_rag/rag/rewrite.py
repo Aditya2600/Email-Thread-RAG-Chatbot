@@ -38,45 +38,13 @@ class QueryRewriter:
 
     def __init__(self, settings: Settings):
         self.settings = settings
-        self._tokenizer = None
-        self._model = None
-
-    def _load_model(self):
-        if self._tokenizer is None or self._model is None:
-            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-
-            self._tokenizer = AutoTokenizer.from_pretrained(self.settings.rewrite_model_name)
-            self._model = AutoModelForSeq2SeqLM.from_pretrained(self.settings.rewrite_model_name)
-        return self._tokenizer, self._model
 
     def rewrite(self, user_text: str, session: SessionState) -> RewriteResult:
-        fallback_query = self._rule_based_rewrite(user_text, session)
-        local_result: RewriteResult
-        try:
-            tokenizer, model = self._load_model()
-            prompt = self._build_prompt(user_text, session)
-            encoded = tokenizer(prompt, return_tensors="pt", truncation=True)
-            output = model.generate(**encoded, max_new_tokens=64)
-            rewritten = tokenizer.decode(output[0], skip_special_tokens=True).strip()
-            if not self._is_usable_rewrite(rewritten, user_text):
-                raise ValueError("rewrite was empty or unchanged")
-            rewritten = self._preserve_intent_anchors(user_text, rewritten)
-            if self._should_prefer_follow_up_fallback(user_text, rewritten, fallback_query):
-                raise ValueError("rewrite dropped follow-up intent")
-            local_result = RewriteResult(
-                query=rewritten,
-                mode="t5",
-                token_counts={
-                    "rewrite_prompt_tokens": int(encoded["input_ids"].shape[-1]),
-                    "rewrite_output_tokens": int(output.shape[-1]),
-                },
-            )
-        except Exception:
-            local_result = RewriteResult(
-                query=fallback_query,
-                mode="rules",
-                token_counts={"rewrite_prompt_tokens": 0, "rewrite_output_tokens": 0},
-            )
+        local_result = RewriteResult(
+            query=self._rule_based_rewrite(user_text, session),
+            mode="rules",
+            token_counts={"rewrite_prompt_tokens": 0, "rewrite_output_tokens": 0},
+        )
         cloud_result = self._maybe_enhance_with_cloud(user_text, session, local_result)
         return cloud_result or local_result
 
@@ -201,34 +169,6 @@ class QueryRewriter:
             raise ValueError("Gemini returned empty text")
         return rewritten
 
-    def _build_prompt(self, user_text: str, session: SessionState) -> str:
-        memory = session.memory_slots
-        recent_turns = "\n".join(
-            f"{turn.role}: {turn.text}"
-            for turn in session.recent_turns[-self.settings.rewrite_turn_window :]
-        )
-        return (
-            "Rewrite the user request into a self-contained retrieval query.\n"
-            f"Active thread: {session.thread_id}\n"
-            f"Recent turns:\n{recent_turns}\n"
-            f"Current focus: {memory.current_focus}\n"
-            "Memory:\n"
-            f"people={memory.people}\n"
-            f"dates={memory.dates}\n"
-            f"amounts={memory.amounts}\n"
-            f"filenames={memory.filenames}\n"
-            f"last_attachment={memory.last_attachment}\n"
-            f"last_subject={memory.last_subject}\n"
-            f"last_decision={memory.last_decision}\n"
-            f"last_user_intent={memory.last_user_intent}\n"
-            f"last_answer_focus={memory.last_answer_focus}\n"
-            f"current_focus={memory.current_focus}\n"
-            f"comparison_target={memory.comparison_target}\n"
-            f"correction_override={memory.correction_override}\n"
-            f"Question: {user_text}\n"
-            "Rewrite:"
-        )
-
     def _rule_based_rewrite(self, user_text: str, session: SessionState) -> str:
         text = user_text.strip()
         memory = session.memory_slots
@@ -276,28 +216,6 @@ class QueryRewriter:
             rewritten = f"{rewritten} focus on {memory.correction_override}"
 
         return rewritten
-
-    def _should_prefer_follow_up_fallback(self, user_text: str, rewritten: str, fallback_query: str) -> bool:
-        lowered_user = user_text.strip().lower()
-        lowered_rewrite = rewritten.lower()
-        lowered_fallback = fallback_query.lower()
-
-        explicit_follow_ups = (
-            r"^and when\??$",
-            r"^and who\??$",
-            r"^compare it\??$",
-            r"^and where\??$",
-        )
-        if any(re.match(pattern, lowered_user, re.IGNORECASE) for pattern in explicit_follow_ups):
-            if "when" in lowered_user and "when" not in lowered_rewrite and "when" in lowered_fallback:
-                return True
-            if "who" in lowered_user and "who" not in lowered_rewrite and "who" in lowered_fallback:
-                return True
-            if "compare" in lowered_user and "compare" not in lowered_rewrite and "compare" in lowered_fallback:
-                return True
-            if "where" in lowered_user and "where" not in lowered_rewrite and "where" in lowered_fallback:
-                return True
-        return False
 
     def _preserve_intent_anchors(self, user_text: str, rewritten: str) -> str:
         anchors = [label for pattern, label in self.INTENT_ANCHORS if pattern.search(user_text)]
