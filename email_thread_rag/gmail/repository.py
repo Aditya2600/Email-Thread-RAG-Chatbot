@@ -125,6 +125,33 @@ class PostgresSyncStore:
         token_key_id: str,
     ) -> Mailbox:
         with self.conn.transaction():
+            # A live mailbox already owns this address under a different
+            # (tenant, mailbox_id). The partial unique index
+            # gmail_mailboxes_live_address_idx would make a plain INSERT raise a
+            # duplicate-key error (a 500 on reconnect); instead, refresh the
+            # existing live row's credentials in place -- one live mailbox per
+            # address is exactly what that index enforces.
+            existing_live = self.conn.execute(
+                "SELECT id FROM gmail_mailboxes "
+                "WHERE email_address = %s AND status <> 'disconnected' "
+                "AND NOT (tenant_id = %s AND mailbox_id = %s)",
+                (email_address, tenant_id, mailbox_id),
+            ).fetchone()
+            if existing_live is not None:
+                row = self.conn.execute(
+                    f"""
+                    UPDATE gmail_mailboxes SET
+                        refresh_token_ciphertext = %s,
+                        token_key_id = %s,
+                        status = 'pending',
+                        last_error = NULL,
+                        updated_at = now()
+                    WHERE id = %s
+                    RETURNING {_MAILBOX_COLUMNS}
+                    """,
+                    (refresh_token_ciphertext, token_key_id, existing_live["id"]),
+                ).fetchone()
+                return _row_to_mailbox(row)
             row = self.conn.execute(
                 f"""
                 INSERT INTO gmail_mailboxes (
@@ -302,6 +329,18 @@ class PostgresSyncStore:
                 f"SELECT {_JOB_COLUMNS} FROM gmail_sync_jobs WHERE id = %s", (job_id,)
             ).fetchone()
         )
+
+    def recent_jobs(self, *, limit: int = 50) -> list[dict[str, Any]]:
+        """Newest-first sync jobs for the activity timeline. Read-only; returns
+        plain rows (history id as text -- numeric(20,0) is unsigned 64-bit)."""
+        rows = self.conn.execute(
+            "SELECT id, tenant_id, mailbox_id, status, attempts, needs_full_sync, "
+            "requested_history_id::text AS requested_history_id, last_error, "
+            "created_at, updated_at, completed_at "
+            "FROM gmail_sync_jobs ORDER BY created_at DESC LIMIT %s",
+            (limit,),
+        ).fetchall()
+        return list(rows)
 
     def complete_job(self, job_id: int) -> None:
         with self.conn.transaction():

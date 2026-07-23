@@ -229,6 +229,11 @@ class AskResponse(BaseModel):
     citations: List[Citation]
     rewrite: str
     rewrite_mode: str
+    # Multi-turn: the user's verbatim question and the follow-up-resolved
+    # retrieval query. Additive; single-turn callers can ignore them. Defaults
+    # keep old clients and any response built without them valid.
+    original_query: str = ""
+    resolved_query: str = ""
     retrieved: List[RetrievalHit]
     trace_id: str
     outside_thread_used: bool = False

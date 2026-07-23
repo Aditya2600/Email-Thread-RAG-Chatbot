@@ -32,6 +32,12 @@ never *become* the citation.
 
 ---
 
+## Demo
+
+![Ask Inbox — the frontend answering a question with citations, or abstaining honestly when evidence is insufficient](docs/screenshots/frontend-ask-inbox-demo.png)
+
+---
+
 ## What it does
 
 - 🔎 **Hybrid retrieval** — BM25 lexical search + dense vector search, fused with
@@ -154,9 +160,11 @@ Docker. See **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** and the detailed se
 
 ## Demo
 
-[▶ Screen recording](https://github.com/Aditya2600/Email-Thread-RAG-Chatbot-Nexux-Ocean/raw/main/Screen_Recording/Screen%20Recording%202026-03-15%20at%2010.34.27%E2%80%AFPM.mov)
+**[▶ Watch the working demo (2 min)](https://github.com/Aditya2600/Email-Thread-RAG-Chatbot/raw/main/Screen_Recording/inbox-copilot-demo.mov)**
 
-Shows thread selection, streaming chat, pronoun/ellipsis follow-ups, attachment
+A live end-to-end walkthrough on a real inbox: connecting Gmail, asking questions,
+and watching every answer cite the exact email or PDF page it came from. Shows
+thread selection, streaming chat, pronoun/ellipsis follow-ups, attachment
 citations, correction override, and graceful abstention on out-of-scope questions.
 
 Try these against the default Enron slice:

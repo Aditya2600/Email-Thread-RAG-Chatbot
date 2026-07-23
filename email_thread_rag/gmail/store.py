@@ -109,7 +109,14 @@ class InMemorySyncStore:
                 return existing
             live = self.find_live_mailbox_by_address(email_address)
             if live is not None:
-                raise ValueError(f"{email_address} is already connected to another mailbox")
+                # One live mailbox per address (the Postgres partial unique index
+                # gmail_mailboxes_live_address_idx). Reconnect refreshes the
+                # existing live row's credentials rather than raising.
+                live.refresh_token_ciphertext = refresh_token_ciphertext
+                live.token_key_id = token_key_id
+                live.status = "pending"
+                live.last_error = None
+                return live
             mailbox = Mailbox(
                 id=self._next_mailbox_id,
                 tenant_id=tenant_id,

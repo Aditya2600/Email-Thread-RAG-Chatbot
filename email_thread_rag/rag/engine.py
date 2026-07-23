@@ -57,13 +57,30 @@ class RAGEngine:
         self.session_store = session_store or SessionStore(self.settings)
         self.retriever = retriever or build_retriever(self.settings)
         self.memory_manager = memory_manager or MemoryManager()
-        self.rewriter = rewriter or QueryRewriter(self.settings)
+        self.rewriter = rewriter or QueryRewriter(self.settings, self._maybe_build_rewrite_provider())
         self.answer_builder = answer_builder or AnswerBuilder()
         self.citation_validator = citation_validator or CitationValidator()
         self.grounded_answerer = grounded_answerer or self._maybe_build_grounded_answerer()
         self.run_dir = self.settings.runs_dir / datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         self.run_dir.mkdir(parents=True, exist_ok=True)
         self.trace_path = self.run_dir / "trace.jsonl"
+
+    def _maybe_build_rewrite_provider(self):
+        # Function-local import keeps the rules-only default import-light: the
+        # OpenAI-compatible client is never imported unless LLM rewrite is on.
+        if not self.settings.rewrite_llm_enabled:
+            return None
+        if not self.settings.rewrite_base_url or not self.settings.rewrite_model:
+            return None
+        from email_thread_rag.rag.answer_provider import OpenAICompatibleAnswerProvider
+
+        return OpenAICompatibleAnswerProvider(
+            base_url=self.settings.rewrite_base_url,
+            model=self.settings.rewrite_model,
+            api_key=self.settings.rewrite_api_key,
+            timeout=self.settings.rewrite_timeout_seconds,
+            max_tokens=64,
+        )
 
     def _maybe_build_grounded_answerer(self):
         # Function-local imports: the disabled/memory default never imports the
@@ -134,6 +151,8 @@ class RAGEngine:
             citations=validation.citations,
             rewrite=rewrite_result.query,
             rewrite_mode=rewrite_result.mode,
+            original_query=user_text,
+            resolved_query=rewrite_result.query,
             retrieved=final_payload["hits"],
             trace_id=trace_id,
             outside_thread_used=outside_thread_used,
@@ -258,6 +277,8 @@ class RAGEngine:
             citations=citations,
             rewrite=rewrite_result.query,
             rewrite_mode=rewrite_result.mode,
+            original_query=user_text,
+            resolved_query=rewrite_result.query,
             retrieved=[],
             trace_id=trace_id,
             outside_thread_used=search_outside_thread,

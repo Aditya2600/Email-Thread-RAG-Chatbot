@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Mail, Shield, Sparkles, Loader2 } from "lucide-react";
 import { PageShell } from "@/components/app/PageShell";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api";
+import { setAccountEmail } from "@/lib/account";
 import { useGmailAvailability, useGmailConnect } from "@/lib/queries";
 
 export const Route = createFileRoute("/settings")({
@@ -66,6 +67,11 @@ function GmailSection() {
   const { gmail: connected, email } = Route.useSearch();
   const [tenantId, setTenantId] = useState("");
   const [mailboxId, setMailboxId] = useState("");
+
+  // The callback carries the real connected address; remember it for the sidebar.
+  useEffect(() => {
+    if (connected && email) setAccountEmail(email);
+  }, [connected, email]);
 
   if (!gmail.data?.oauthAvailable) return null;
 

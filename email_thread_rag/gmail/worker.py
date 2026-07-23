@@ -18,6 +18,7 @@ import logging
 import os
 import signal
 import socket
+import threading
 import time
 from typing import Callable, Optional
 
@@ -104,6 +105,49 @@ class SyncWorker:
                 break
             outcomes.append(outcome)
         return outcomes
+
+
+class InlineWorker:
+    """Runs a ``SyncWorker`` in a background daemon thread inside the API
+    process. This is what turns a Pub/Sub push into stored mail when there is no
+    separate worker container: the webhook queues a job, this thread drains it.
+
+    A crash in one job never kills the loop (``run_once`` swallows per-job
+    errors); a store/DB blip in ``claim_job`` is caught here and backed off."""
+
+    def __init__(self, worker: SyncWorker, *, poll_interval: float = 10.0):
+        self.worker = worker
+        self.poll_interval = poll_interval
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._run, name="gmail-sync-worker", daemon=True)
+
+    def start(self) -> "InlineWorker":
+        self._thread.start()
+        logger.info("gmail inline sync worker started (poll=%.1fs)", self.poll_interval)
+        return self
+
+    def _run(self) -> None:
+        while not self._stop.is_set():
+            try:
+                drained = self.worker.run_once()
+            except Exception:  # noqa: BLE001 - a store/DB blip must not stop the loop
+                logger.exception("gmail inline worker loop error; backing off")
+                drained = None
+            if drained is None:
+                self._stop.wait(self.poll_interval)
+
+    def stop(self, *, timeout: float = 5.0) -> None:
+        self._stop.set()
+        self._thread.join(timeout=timeout)
+        logger.info("gmail inline sync worker stopped")
+
+
+def start_inline_worker(settings) -> InlineWorker:
+    """Build the production worker and start it in-process. Callers gate this on
+    ``settings.gmail_inline_worker`` and Gmail being configured."""
+    return InlineWorker(
+        build_production_worker(settings), poll_interval=settings.gmail_worker_poll_interval
+    ).start()
 
 
 def build_production_worker(settings) -> SyncWorker:

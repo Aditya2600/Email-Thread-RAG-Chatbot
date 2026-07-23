@@ -111,6 +111,25 @@ class SyncStoreContract:
         reconnected = connect_mailbox(store, tenant="acme", mailbox="inbox-2")
         assert store.find_live_mailbox_by_address("user@example.com").id == reconnected.id
 
+    def test_reconnect_same_address_updates_existing_live_mailbox(self, store):
+        """A second connect for an already-live address refreshes the existing
+        mailbox instead of raising a duplicate-key error (one live mailbox per
+        address). Regression for the reconnect 500."""
+        first = connect_mailbox(store, tenant="acme", mailbox="inbox")
+
+        reconnected = store.upsert_mailbox(
+            tenant_id="acme",
+            mailbox_id="inbox-again",
+            email_address="user@example.com",
+            refresh_token_ciphertext=b"new-ciphertext",
+            token_key_id="rotated-key",
+        )
+
+        assert reconnected.id == first.id  # same row, not a new one
+        assert reconnected.refresh_token_ciphertext == b"new-ciphertext"
+        assert reconnected.status == "pending"
+        assert store.find_live_mailbox_by_address("user@example.com").id == first.id
+
     def test_watch_renewal_due_list_respects_expiry(self, store):
         soon = store.upsert_mailbox(
             tenant_id="acme",

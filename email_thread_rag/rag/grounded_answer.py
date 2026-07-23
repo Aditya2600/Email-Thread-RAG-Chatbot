@@ -20,10 +20,14 @@ provider SDK, psycopg, or torch: the provider is injected and duck-typed.
 from __future__ import annotations
 
 import json
+import logging
+import unicodedata
 from dataclasses import dataclass
 from typing import Optional
 
 from email_thread_rag.app.schemas import AnswerCitation, AnswerClaim, AnswerResult, RetrievalHit
+
+logger = logging.getLogger(__name__)
 
 MAX_ATTEMPTS = 2
 ABSTAIN_TEXT = "I don't have enough supported evidence in this mailbox to answer that."
@@ -201,6 +205,58 @@ def _parse_draft(raw: Optional[str]) -> Optional[_Draft]:
     )
 
 
+def _normalize_ws(text: str) -> tuple[str, list[int]]:
+    """Collapse every run of unicode whitespace (spaces, tabs, newlines, NBSP)
+    to a single ASCII space and strip the ends. Returns the normalized string
+    plus a map from each normalized index to the original index it came from,
+    so a match can be projected back onto the exact authored substring. Only
+    whitespace is altered -- letters, digits, currency and punctuation are kept
+    verbatim, so an invented amount or date can never be matched into place."""
+    out: list[str] = []
+    index_map: list[int] = []
+    prev_space = False
+    for i, ch in enumerate(text):
+        if ch.isspace() or unicodedata.category(ch) == "Zs":
+            if out and not prev_space:
+                out.append(" ")
+                index_map.append(i)
+                prev_space = True
+        else:
+            out.append(ch)
+            index_map.append(i)
+            prev_space = False
+    while out and out[-1] == " ":
+        out.pop()
+        index_map.pop()
+    return "".join(out), index_map
+
+
+def _locate_quote(text: str, quote: str) -> Optional[tuple[int, int]]:
+    """Find ``quote`` inside ``text`` and return its (start, end) offsets in the
+    original text, or None. Exact substring first; then a whitespace-tolerant
+    pass so a quote the model copied but re-spaced (line breaks/NBSP collapsed
+    to single spaces, common in extracted email/PDF/OCR text) still resolves.
+
+    ponytail: whitespace-only tolerance. Value-level reformatting (₹ vs Rs,
+    changed comma grouping) still correctly rejects; add a normalized-number
+    matcher only if that turns into a real miss."""
+    index = text.find(quote)
+    if index != -1:
+        return index, index + len(quote)
+    norm_text, index_map = _normalize_ws(text)
+    norm_quote, _ = _normalize_ws(quote)
+    if not norm_quote:
+        return None
+    pos = norm_text.find(norm_quote)
+    if pos == -1:
+        return None
+    start = index_map[pos]
+    # index_map[k] is the original index of norm_text[k]; the match's last
+    # normalized char is non-space (ends are stripped), so it maps 1:1.
+    end = index_map[pos + len(norm_quote) - 1] + 1
+    return start, end
+
+
 def validate_draft(draft: Optional[_Draft], pack: list[EvidenceChunk]) -> _Validation:
     """Authoritative local validation. Every citation must resolve to a real
     chunk in *this* pack and quote its clean text verbatim; any invalid citation,
@@ -236,19 +292,23 @@ def validate_draft(draft: Optional[_Draft], pack: list[EvidenceChunk]) -> _Valid
                 # The model volunteered an offset: it must land the quote exactly.
                 if not isinstance(start, int) or item.text[start : start + len(quote)] != quote:
                     return _Validation(False, "offset_mismatch", [], [])
-                index = start
+                index, quote_end = start, start + len(quote)
             else:
-                index = item.text.find(quote)
-                if index == -1:
+                located = _locate_quote(item.text, quote)
+                if located is None:
                     # Not in the clean authored text -> not citable (this is also
                     # what rejects metadata-only "evidence").
                     return _Validation(False, "quote_not_found", [], [])
+                # Store the exact authored substring, not the model's re-spacing,
+                # so the citation quote stays byte-verbatim from the evidence.
+                index, quote_end = located
+                quote = item.text[index:quote_end]
             citation = AnswerCitation(
                 chunk_id=item.chunk_id,
                 message_id=item.message_id,
                 quote=quote,
                 quote_start=index,
-                quote_end=index + len(quote),
+                quote_end=quote_end,
                 page_no=item.page_no,
                 attachment_name=item.attachment_name,
                 ocr_used=item.ocr_used,
@@ -283,6 +343,9 @@ class GroundedAnswerer:
         self.provider = provider
         self.settings = settings
         self.budget = max(1, int(getattr(settings, "answer_evidence_budget", 6)))
+        # Opt-in diagnostic logging (EMAIL_RAG_DEBUG_GROUNDED_ANSWER). Silent and
+        # side-effect-free when off; never gates or alters answer behavior.
+        self._debug = bool(getattr(settings, "debug_grounded_answer", False))
 
     def answer(self, query: str, *, thread_id: Optional[str] = None) -> AnswerResult:
         if self.provider is None:
@@ -305,13 +368,35 @@ class GroundedAnswerer:
                 continue
             try:
                 raw = self.provider.generate(build_messages(query, pack))
-            except Exception:
+            except Exception as exc:
                 # Provider disabled mid-flight / network failure: abstain, do not
-                # retry against a dead endpoint.
+                # retry against a dead endpoint. AnswerProviderError messages are
+                # status-only (never the key, prompt, or body), safe to log.
+                self._log_stage("provider_error", attempt=attempt, error=f"{type(exc).__name__}: {exc}")
                 return self._abstain("provider_error", attempts=attempt, routes=routes, counts=counts)
-            validation = validate_draft(_parse_draft(raw), pack)
+            # (a) raw LLM output, before any parsing. finish_reason/correlation
+            # id are not surfaced by the provider seam, logged as null.
+            self._log_stage(
+                "llm_response",
+                attempt=attempt,
+                model=getattr(self.provider, "model_id", None),
+                finish_reason=None,
+                correlation_id=None,
+                evidence_chunk_ids=[item.chunk_id for item in pack],
+                raw_content=raw,
+            )
+            draft = _parse_draft(raw)
+            self._log_parsed(attempt, draft)
+            validation = validate_draft(draft, pack)
+            # (c) authoritative local validation outcome + precise rejection.
+            self._log_stage(
+                "validation",
+                attempt=attempt,
+                passed=validation.ok,
+                supported_claim_count=len(validation.claims),
+                rejection_reason=validation.reason,
+            )
             if validation.ok:
-                draft = _parse_draft(raw)  # re-parse is cheap and keeps validate pure
                 return AnswerResult(
                     status="answered",
                     answer=draft.answer,
@@ -329,6 +414,8 @@ class GroundedAnswerer:
         return self._abstain(reason, attempts=attempt, routes=routes, counts=counts)
 
     def _abstain(self, reason, *, attempts, routes, counts) -> AnswerResult:
+        # (d) the exact reason that selected the abstention fallback.
+        self._log_stage("fallback", reason=reason, attempts=attempts, candidate_counts=counts)
         return AnswerResult(
             status="abstained",
             answer=ABSTAIN_TEXT,
@@ -342,6 +429,46 @@ class GroundedAnswerer:
                 "attempts": attempts,
                 "validation": reason,
             },
+        )
+
+    def _log_stage(self, stage: str, **fields) -> None:
+        """Emit one parseable diagnostic event, only when the debug flag is on.
+
+        ``json.dumps`` keeps it machine-readable; ``ensure_ascii=False`` keeps ₹
+        and other symbols legible. Never called with secrets, headers, the system
+        prompt, or full evidence bodies -- callers pass chunk IDs and short quotes.
+        """
+        if not self._debug:
+            return
+        logger.info(
+            "grounded_answer stage=%s %s",
+            stage,
+            json.dumps(fields, default=str, ensure_ascii=False, sort_keys=True),
+        )
+
+    def _log_parsed(self, attempt: int, draft: Optional["_Draft"]) -> None:
+        """(b) The parsed payload. Citations are pulled out of the claims so the
+        stage shows answer/claims/citations/is_supported/needs_more_evidence."""
+        if not self._debug:
+            return
+        if draft is None:
+            self._log_stage("parsed", attempt=attempt, parsed=False)
+            return
+        citations = [
+            citation
+            for claim in draft.claims
+            if isinstance(claim, dict) and isinstance(claim.get("citations"), list)
+            for citation in claim["citations"]
+        ]
+        self._log_stage(
+            "parsed",
+            attempt=attempt,
+            parsed=True,
+            answer=draft.answer,
+            claims=draft.claims,
+            citations=citations,
+            is_supported=draft.is_supported,
+            needs_more_evidence=draft.needs_more_evidence,
         )
 
 

@@ -36,8 +36,11 @@ class QueryRewriter:
         (re.compile(r"\bpdf\b", re.IGNORECASE), "pdf"),
     )
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Settings, provider=None):
+        # provider is an OpenAI-compatible client with .generate(messages) -> str
+        # (rag.answer_provider.OpenAICompatibleAnswerProvider). None => rules only.
         self.settings = settings
+        self.provider = provider
 
     def rewrite(self, user_text: str, session: SessionState) -> RewriteResult:
         local_result = RewriteResult(
@@ -45,8 +48,50 @@ class QueryRewriter:
             mode="rules",
             token_counts={"rewrite_prompt_tokens": 0, "rewrite_output_tokens": 0},
         )
-        cloud_result = self._maybe_enhance_with_cloud(user_text, session, local_result)
-        return cloud_result or local_result
+        # Prefer the injected LLM (medha) when present; fall back to the legacy
+        # Gemini path, then to the deterministic rule-based draft.
+        return (
+            self._maybe_enhance_with_medha(user_text, session, local_result)
+            or self._maybe_enhance_with_cloud(user_text, session, local_result)
+            or local_result
+        )
+
+    def _maybe_enhance_with_medha(
+        self,
+        user_text: str,
+        session: SessionState,
+        local_result: RewriteResult,
+    ) -> RewriteResult | None:
+        if self.provider is None:
+            return None
+        prompt = self._build_cloud_prompt(user_text, session, local_result.query)
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You rewrite a chat message into one concise, self-contained retrieval query "
+                    "for an email search index. Resolve pronouns and implicit references using the "
+                    "conversation context. Output only the rewritten query -- no labels, no quotes, "
+                    "no explanation."
+                ),
+            },
+            {"role": "user", "content": prompt},
+        ]
+        try:
+            rewritten = (self.provider.generate(messages) or "").strip()
+        except Exception:
+            return None
+        if not self._is_usable_rewrite(rewritten, user_text):
+            return None
+        rewritten = self._preserve_intent_anchors(user_text, rewritten)
+        token_counts = dict(local_result.token_counts)
+        token_counts["rewrite_llm_input_chars"] = len(prompt)
+        token_counts["rewrite_llm_output_chars"] = len(rewritten)
+        return RewriteResult(
+            query=rewritten,
+            mode=f"{local_result.mode}+medha",
+            token_counts=token_counts,
+        )
 
     def _maybe_enhance_with_cloud(
         self,

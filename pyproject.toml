@@ -52,6 +52,7 @@ gmail = [
     "cryptography>=42.0.0",
     "google-auth>=2.29.0",
     "psycopg[binary]>=3.1.18",
+    "requests>=2.31.0",
 ]
 # Stage-8 local OCR fallback for scanned/image-only PDF pages. Only used when
 # ATTACHMENT_OCR_ENABLED=true; the Tesseract backend lazy-imports these, and when

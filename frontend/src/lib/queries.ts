@@ -1,10 +1,20 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { askInbox, getGmailAvailability, listThreads, startGmailAuthorization } from "./api";
+import { askInbox, getGmailAvailability, listSyncHistory, listThreads, startGmailAuthorization } from "./api";
 
 export function useThreads() {
   return useQuery({ queryKey: ["threads"], queryFn: listThreads, retry: false });
+}
+
+export function useSyncHistory() {
+  return useQuery({
+    queryKey: ["sync-history"],
+    queryFn: listSyncHistory,
+    // Sync runs server-side off Pub/Sub; poll so the timeline stays live.
+    refetchInterval: 5_000,
+    retry: false,
+  });
 }
 
 export function useGmailAvailability() {

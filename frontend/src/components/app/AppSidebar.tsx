@@ -1,21 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   Sparkles,
-  Inbox,
   FileText,
   Activity,
   Settings as SettingsIcon,
-  ChevronDown,
   Mail,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { getAccountEmail, initialsFromEmail } from "@/lib/account";
 
 const nav: Array<{ to: string; label: string; icon: typeof Sparkles; exact?: boolean }> = [
   { to: "/", label: "Ask Inbox", icon: Sparkles, exact: true },
@@ -26,6 +20,9 @@ const nav: Array<{ to: string; label: string; icon: typeof Sparkles; exact?: boo
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  // Re-read on navigation so connecting a mailbox on /settings reflects here.
+  const [email, setEmail] = useState<string | null>(null);
+  useEffect(() => setEmail(getAccountEmail()), [pathname]);
 
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border bg-sidebar">
@@ -36,24 +33,6 @@ export function AppSidebar() {
         <div className="min-w-0 text-[15px] font-semibold tracking-tight text-ink">
           Inbox Copilot
         </div>
-      </div>
-
-      <div className="px-3 pb-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="group flex w-full items-center justify-between rounded-lg border border-border bg-surface-raised px-3 py-2 text-left text-sm text-ink hover:bg-accent transition-colors">
-            <span className="flex items-center gap-2 min-w-0">
-              <Inbox className="h-4 w-4 text-ink-muted shrink-0" />
-              <span className="truncate">All mailboxes</span>
-            </span>
-            <ChevronDown className="h-4 w-4 text-ink-muted" />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuItem>All mailboxes</DropdownMenuItem>
-            <DropdownMenuItem>Inbox</DropdownMenuItem>
-            <DropdownMenuItem>Project Atlas</DropdownMenuItem>
-            <DropdownMenuItem>Finance</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
 
       <nav className="flex-1 px-2 py-2">
@@ -85,14 +64,25 @@ export function AppSidebar() {
       <div className="border-t border-border px-3 py-3">
         <div className="flex items-center gap-3 rounded-lg px-2 py-1.5">
           <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-brand text-white text-xs">JO</AvatarFallback>
+            <AvatarFallback className="bg-brand text-white text-xs">
+              {email ? initialsFromEmail(email) : <Mail className="h-3.5 w-3.5" />}
+            </AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-medium text-ink">Jordan Okafor</div>
-            <div className="flex items-center gap-1 text-[11px] text-ink-muted">
-              <Mail className="h-3 w-3" />
-              <span className="truncate">jordan@atlas-co.com</span>
-            </div>
+            {email ? (
+              <div className="flex items-center gap-1 text-[13px] text-ink">
+                <Mail className="h-3 w-3 shrink-0 text-ink-muted" />
+                <span className="truncate">{email}</span>
+              </div>
+            ) : (
+              <Link
+                to="/settings"
+                search={{ gmail: undefined, email: undefined }}
+                className="truncate text-sm text-ink-muted hover:text-ink"
+              >
+                No mailbox connected
+              </Link>
+            )}
           </div>
         </div>
       </div>

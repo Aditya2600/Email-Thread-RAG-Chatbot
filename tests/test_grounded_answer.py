@@ -11,6 +11,7 @@ the provider is disabled / the provider fails.
 from __future__ import annotations
 
 import json
+import logging
 from datetime import datetime, timezone
 
 import pytest
@@ -238,6 +239,120 @@ def test_provider_failure_abstains_without_retrying_the_dead_endpoint():
     assert result.status == "abstained"
     assert result.abstain_reason == "provider_error"
     assert len(provider.calls) == 1
+
+
+# --- false-abstention regression -------------------------------------------
+def test_whitespace_variant_quote_is_accepted_not_abstained():
+    """Retrieval is correct and the chunk holds the exact approved budget
+    ₹8,40,000 and go-live date 12 August 2026, but as extracted the amount has
+    a double space and the date is split across a line break. A byte-exact
+    quote check would abstain; the model copies the values re-spaced to single
+    spaces and must be answered from that evidence, citing 8,40,000 -- never the
+    obsolete ₹7,50,000 mentioned earlier in the same chunk."""
+    body = (
+        "Earlier the budget was ₹7,50,000 but that is now superseded.\n"
+        "Approved budget:  ₹8,40,000. Go-live date: 12 August\n2026."
+    )
+    amount_quote = "Approved budget: ₹8,40,000."  # single space; chunk has two
+    date_quote = "Go-live date: 12 August 2026."  # single space; chunk has \n
+    response = prov_json(
+        "The approved budget is ₹8,40,000 and go-live is 12 August 2026.",
+        [
+            {"text": "Approved budget is ₹8,40,000.", "citations": [{"chunk_id": "c1", "quote": amount_quote}]},
+            {"text": "Go-live date is 12 August 2026.", "citations": [{"chunk_id": "c1", "quote": date_quote}]},
+        ],
+    )
+    answerer, _, provider = _answerer([response], hits_per_attempt=[[_hit("c1", "<m1@x>", body)]])
+    result = answerer.answer("what is the approved budget and go-live date?")
+
+    assert result.status == "answered"
+    assert result.attempts == 1
+    assert len(provider.calls) == 1  # no retry, no abstention
+    # Both citations resolve to the real authored substring (the re-spaced
+    # original), and point at 8,40,000 -- not the obsolete 7,50,000.
+    quotes = [c.quote for c in result.citations]
+    assert any("8,40,000" in q for q in quotes)
+    assert all("7,50,000" not in q for q in quotes)
+    for citation in result.citations:
+        assert body[citation.quote_start : citation.quote_end] == citation.quote
+    assert "8,40,000" in result.answer and "7,50,000" not in result.answer
+
+
+# --- opt-in diagnostic logging ----------------------------------------------
+_LOGGER = "email_thread_rag.rag.grounded_answer"
+
+
+def _debug_answerer(responses, *, debug, hits_per_attempt=None):
+    hits_per_attempt = hits_per_attempt or [[_hit("c1", "<m1@x>", BODY)]]
+    retriever = FakeRetriever(hits_per_attempt)
+    provider = FakeProvider(responses)
+    settings = Settings(answer_generation_enabled=True, answer_evidence_budget=3, debug_grounded_answer=debug)
+    return GroundedAnswerer(retriever, provider, settings)
+
+
+def _stage_messages(caplog):
+    return [r.getMessage() for r in caplog.records if r.name == _LOGGER]
+
+
+def _stages(messages):
+    return [m.split("stage=", 1)[1].split(" ", 1)[0] for m in messages]
+
+
+def test_debug_logging_is_off_by_default(caplog):
+    quote = "approved amount is $1200"
+    answerer = _debug_answerer(
+        [prov_json("It is $1200.", [{"text": "$1200.", "citations": [{"chunk_id": "c1", "quote": quote}]}])],
+        debug=False,
+    )
+    with caplog.at_level(logging.INFO, logger=_LOGGER):
+        result = answerer.answer("what is the approved amount?")
+    assert result.status == "answered"
+    assert _stage_messages(caplog) == []  # silent unless the flag is on
+
+
+def test_debug_logging_emits_raw_parsed_validation_and_fallback(caplog):
+    # A non-verbatim quote: answered path rejects, retries once, then abstains --
+    # so all four stages (including fallback) are exercised.
+    bad = prov_json("x", [{"text": "c", "citations": [{"chunk_id": "c1", "quote": "amount is $9999"}]}])
+    answerer = _debug_answerer([bad, bad], debug=True)
+    with caplog.at_level(logging.INFO, logger=_LOGGER):
+        result = answerer.answer("what is the approved amount?")
+
+    assert result.status == "abstained"
+    assert result.abstain_reason == "quote_not_found"
+    messages = _stage_messages(caplog)
+    stages = set(_stages(messages))
+    assert {"llm_response", "parsed", "validation", "fallback"} <= stages
+
+    # (a) raw completion, (b) parsed payload, (c) validation result, (d) reason.
+    assert any('stage=llm_response' in m and 'raw_content' in m and 'fake-answer-model' in m for m in messages)
+    assert any('stage=parsed' in m and 'is_supported' in m and 'needs_more_evidence' in m for m in messages)
+    assert any('stage=validation' in m and '"passed": false' in m and 'quote_not_found' in m for m in messages)
+    assert any('stage=fallback' in m and 'quote_not_found' in m for m in messages)
+
+    # Never leak the system prompt or an auth header into the logs.
+    blob = "\n".join(messages)
+    assert "You are a careful email assistant" not in blob
+    assert "Authorization" not in blob and "Bearer" not in blob
+
+
+def test_debug_logging_does_not_change_answer_behavior(caplog):
+    quote = "approved amount is $1200"
+    response = prov_json(
+        "The approved amount is $1200.",
+        [{"text": "It is $1200.", "citations": [{"chunk_id": "c1", "quote": quote}]}],
+    )
+    off = _debug_answerer([response], debug=False).answer("q")
+    with caplog.at_level(logging.INFO, logger=_LOGGER):
+        on = _debug_answerer([response], debug=True).answer("q")
+
+    # Identical outcome; the flag only adds logs.
+    assert (on.status, on.answer, on.attempts) == (off.status, off.answer, off.attempts)
+    assert [c.quote for c in on.citations] == [c.quote for c in off.citations]
+    # Success path logs a,b,c but never the fallback stage.
+    stages = set(_stages(_stage_messages(caplog)))
+    assert {"llm_response", "parsed", "validation"} <= stages
+    assert "fallback" not in stages
 
 
 # --- evidence pack ----------------------------------------------------------

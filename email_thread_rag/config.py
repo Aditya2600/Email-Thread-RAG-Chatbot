@@ -68,6 +68,24 @@ class Settings(BaseSettings):
     cloud_rewrite_model: Optional[str] = None
     gemini_api_key: Optional[str] = Field(default_factory=lambda: os.getenv("GEMINI_API_KEY"))
 
+    # LLM query rewrite over the same OpenAI-compatible seam as Stage 4/5/7
+    # (MEDHA_* fallbacks). Off by default and import-light when off: no provider
+    # is built and no HTTP client is imported, so the rule-based rewrite path is
+    # byte-identical. On, it resolves multi-turn references the regex rules miss.
+    rewrite_llm_enabled: bool = Field(
+        default_factory=lambda: os.getenv("REWRITE_LLM_ENABLED", "false").lower() in ("1", "true", "yes")
+    )
+    rewrite_base_url: Optional[str] = Field(
+        default_factory=lambda: os.getenv("REWRITE_BASE_URL") or os.getenv("MEDHA_BASE_URL")
+    )
+    rewrite_model: Optional[str] = Field(
+        default_factory=lambda: os.getenv("REWRITE_MODEL") or os.getenv("MEDHA_MODEL")
+    )
+    # Secret: environment only, never written to a config file or a log line.
+    rewrite_api_key: Optional[str] = Field(
+        default_factory=lambda: os.getenv("REWRITE_API_KEY") or os.getenv("MEDHA_API_KEY")
+    )
+
     bm25_top_k: int = 15
     dense_top_k: int = 15
     fused_top_k: int = 10
@@ -136,6 +154,16 @@ class Settings(BaseSettings):
         default_factory=lambda: os.getenv("GMAIL_TOKEN_ENCRYPTION_KEY")
     )
     gmail_token_key_id: str = Field(default_factory=lambda: os.getenv("GMAIL_TOKEN_KEY_ID", "local"))
+    # Run the Gmail sync worker as a background thread inside the API process, so
+    # a Pub/Sub push actually gets drained without a separate worker container.
+    # Set false when running a dedicated `python -m email_thread_rag.gmail.worker`
+    # (two workers is safe -- claim_job uses FOR UPDATE SKIP LOCKED).
+    gmail_inline_worker: bool = Field(
+        default_factory=lambda: os.getenv("GMAIL_INLINE_WORKER", "true").lower() in ("1", "true", "yes")
+    )
+    gmail_worker_poll_interval: float = Field(
+        default_factory=lambda: float(os.getenv("GMAIL_WORKER_POLL_INTERVAL", "10"))
+    )
     # Where the OAuth callback sends the browser once the mailbox is connected.
     # The callback is reached by browser navigation from Google, so it must end
     # on a page, not on a JSON body.
@@ -247,6 +275,15 @@ class Settings(BaseSettings):
     # Bounded; the one retry widens retrieval to twice this.
     answer_evidence_budget: int = Field(
         default_factory=lambda: int(os.getenv("ANSWER_EVIDENCE_BUDGET", "6"))
+    )
+    # Opt-in diagnostic logging for the grounded-answer path (raw LLM output ->
+    # parse -> citation validation -> abstention). Off by default; when on it
+    # logs raw model output and parsed claims/citations at INFO to explain why an
+    # answer was produced or abstained. Never logs keys, headers, the system
+    # prompt, or full evidence bodies -- only chunk IDs and short cited quotes.
+    debug_grounded_answer: bool = Field(
+        default_factory=lambda: os.getenv("EMAIL_RAG_DEBUG_GROUNDED_ANSWER", "false").lower()
+        in ("1", "true", "yes")
     )
 
     # Stage-8 PDF attachment extraction + local OCR + page-level citations.

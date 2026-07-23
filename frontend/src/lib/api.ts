@@ -267,6 +267,12 @@ function getSession(): Promise<string> {
   return sessionPromise;
 }
 
+/** Start a fresh conversation: drop the current session so the next /ask opens
+ *  a new one, clearing the backend's per-session turn history and memory. */
+export function newConversation(): void {
+  sessionPromise = null;
+}
+
 // --- Public API --------------------------------------------------------------
 
 /** Thread IDs the backend has indexed. This is the only inventory route it has:
@@ -274,6 +280,42 @@ function getSession(): Promise<string> {
 export async function listThreads(): Promise<string[]> {
   const { threads } = await request<{ threads: string[] }>("/threads");
   return threads;
+}
+
+export type SyncEvent = {
+  id: number;
+  mailboxId: string;
+  status: "pending" | "running" | "done" | "failed";
+  attempts: number;
+  needsFullSync: boolean;
+  lastError: string | null;
+  createdAt: string;
+  completedAt: string | null;
+};
+
+type SyncEventWire = {
+  id: number;
+  mailbox_id: string;
+  status: SyncEvent["status"];
+  attempts: number;
+  needs_full_sync: boolean;
+  last_error: string | null;
+  created_at: string;
+  completed_at: string | null;
+};
+
+export async function listSyncHistory(): Promise<SyncEvent[]> {
+  const { events } = await request<{ events: SyncEventWire[] }>("/gmail/sync-history");
+  return events.map((e) => ({
+    id: e.id,
+    mailboxId: e.mailbox_id,
+    status: e.status,
+    attempts: e.attempts,
+    needsFullSync: e.needs_full_sync,
+    lastError: e.last_error,
+    createdAt: e.created_at,
+    completedAt: e.completed_at,
+  }));
 }
 
 function postAsk(sessionId: string, question: string): Promise<WireAskResponse> {
